@@ -12,7 +12,24 @@ if (menuToggle && navMenu) {
   document.addEventListener('click', (e) => {
     if (!menuToggle.contains(e.target) && !navMenu.contains(e.target)) {
       navMenu.classList.remove('active');
+      navMenu.querySelectorAll('.has-dropdown.open').forEach(el => el.classList.remove('open'));
     }
+  });
+
+  // Mobile: tap dropdown parent to toggle
+  navMenu.querySelectorAll('.has-dropdown > a').forEach(link => {
+    link.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        const parent = link.parentElement;
+        const isOpen = parent.classList.contains('open');
+        // Close siblings
+        navMenu.querySelectorAll('.has-dropdown.open').forEach(el => {
+          if (el !== parent) el.classList.remove('open');
+        });
+        parent.classList.toggle('open', !isOpen);
+        e.preventDefault();
+      }
+    });
   });
 }
 
