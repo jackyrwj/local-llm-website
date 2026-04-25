@@ -1,0 +1,184 @@
+
+<style>
+  .scheme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
+  .scheme-card { border: 2px solid #e2e8f0; border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.2s; }
+  .scheme-card:hover { border-color: #1d4ed8; box-shadow: 0 4px 12px rgba(29,78,216,0.15); }
+  .scheme-card.selected { border-color: #1d4ed8; background: #eff6ff; }
+  .scheme-badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+  .badge-1 { background: #dbeafe; color: #1d4ed8; }
+  .badge-2 { background: #fef3c7; color: #d97706; }
+  .badge-3 { background: #dcfce7; color: #059669; }
+  .mock-screen { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 11px; line-height: 1.4; }
+  .mock-nav { display: flex; gap: 6px; padding: 6px; background: #f8fafc; border-radius: 4px; margin-bottom: 8px; font-size: 9px; }
+  .mock-nav span { color: #64748b; }
+  .mock-hero { padding: 16px; background: linear-gradient(135deg, #1d4ed8, #3b82f6); border-radius: 6px; color: white; text-align: center; margin-bottom: 8px; }
+  .mock-hero h4 { margin: 0 0 4px; font-size: 13px; }
+  .mock-hero p { margin: 0; font-size: 10px; opacity: 0.9; }
+  .mock-hero .btns { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+  .mock-btn { padding: 3px 10px; border-radius: 4px; font-size: 9px; font-weight: 600; }
+  .mock-btn-primary { background: white; color: #1d4ed8; }
+  .mock-btn-secondary { background: rgba(255,255,255,0.2); color: white; }
+  .mock-tools { margin-bottom: 8px; }
+  .mock-tools-label { font-size: 10px; font-weight: 700; color: #0f172a; margin-bottom: 6px; display: block; }
+  .mock-tool-grid { display: grid; gap: 6px; }
+  .mock-tool-grid.col2 { grid-template-columns: 1fr 1fr; }
+  .mock-tool-grid.col3 { grid-template-columns: repeat(3, 1fr); }
+  .mock-tool-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; background: white; }
+  .mock-tool-card.featured { border-color: #1d4ed8; background: #eff6ff; }
+  .mock-tool-card .icon { width: 20px; height: 20px; background: #dbeafe; border-radius: 4px; margin-bottom: 4px; }
+  .mock-tool-card h5 { margin: 0 0 2px; font-size: 10px; color: #0f172a; }
+  .mock-tool-card p { margin: 0; font-size: 9px; color: #64748b; }
+  .mock-articles { padding: 10px; background: #f8fafc; border-radius: 6px; }
+  .mock-articles-label { font-size: 10px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+  .mock-article-row { display: flex; gap: 6px; margin-bottom: 4px; }
+  .mock-article-row span { font-size: 9px; color: #475569; }
+  .mock-article-row .tag { padding: 1px 4px; background: #e2e8f0; border-radius: 2px; font-size: 8px; }
+  .mock-ad { padding: 8px; background: #fef2f2; border-radius: 4px; text-align: center; font-size: 9px; color: #dc2626; margin: 8px 0; }
+  .mock-trust { display: flex; gap: 8px; justify-content: center; padding: 8px; }
+  .mock-trust span { font-size: 9px; color: #64748b; }
+  .details { padding: 12px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+  .details h4 { margin: 0 0 6px; font-size: 12px; color: #0f172a; }
+  .details ul { margin: 0; padding-left: 16px; font-size: 11px; color: #475569; }
+  .details li { margin-bottom: 3px; }
+  .highlight { color: #1d4ed8; font-weight: 600; }
+</style>
+
+<h2>方案 A 的 3 种具体实现</h2>
+<p class="subtitle">工具为主、文章为辅。点击选择最符合你想法的方案</p>
+
+<div class="scheme-grid">
+
+  <!-- 方案 A1: 工具橱窗 -->
+  <div class="scheme-card" data-choice="a1" onclick="toggleSelect(this)">
+    <div class="details">
+      <span class="scheme-badge badge-1">方案 A1 · 工具橱窗</span>
+      <h4>像 SaaS 产品首页，5 个工具等宽排列</h4>
+      <ul>
+        <li>Hero 极简：标题 + 一句话 + 两个按钮</li>
+        <li>5 个工具卡片<span class="highlight">等宽网格</span>（3+2 或 2+3）</li>
+        <li>每个工具卡片带图标、描述、使用人次</li>
+        <li>底部 3 篇最新文章横排</li>
+      </ul>
+    </div>
+    <div class="mock-screen">
+      <div class="mock-nav"><span>AI部署手记</span><span>工具</span><span>文章</span><span>关于</span></div>
+      <div class="mock-hero">
+        <h4>本地大模型部署工具箱</h4>
+        <p>vLLM · 显存 · 成本 · 报错 · 选型</p>
+        <div class="btns"><span class="mock-btn mock-btn-primary">使用工具</span><span class="mock-btn mock-btn-secondary">查看教程</span></div>
+      </div>
+      <div class="mock-tools">
+        <span class="mock-tools-label">5 个部署工具</span>
+        <div class="mock-tool-grid col3">
+          <div class="mock-tool-card featured"><div class="icon"></div><h5>命令生成器</h5><p>生成 vLLM 启动命令</p></div>
+          <div class="mock-tool-card"><div class="icon"></div><h5>显存估算器</h5><p>计算 GPU 显存需求</p></div>
+          <div class="mock-tool-card"><div class="icon"></div><h5>成本计算器</h5><p>本地 vs API 成本</p></div>
+          <div class="mock-tool-card"><div class="icon"></div><h5>报错诊断器</h5><p>定位常见报错</p></div>
+          <div class="mock-tool-card"><div class="icon"></div><h5>部署选型助手</h5><p>推荐最佳方案</p></div>
+        </div>
+      </div>
+      <div class="mock-ad">AdSense 广告位</div>
+      <div class="mock-articles">
+        <div class="mock-articles-label">最新实战文章</div>
+        <div class="mock-article-row"><span class="tag">教程</span><span>vLLM + Qwen3 完整部署指南</span></div>
+        <div class="mock-article-row"><span class="tag">踩坑</span><span>上下文爆满问题解决方案</span></div>
+        <div class="mock-article-row"><span class="tag">对比</span><span>本地模型 vs 云端模型成本对比</span></div>
+      </div>
+      <div class="mock-trust"><span>5 个工具</span><span>20+ 篇文章</span><span>0 后端依赖</span></div>
+    </div>
+  </div>
+
+  <!-- 方案 A2: 问题场景地图 -->
+  <div class="scheme-card" data-choice="a2" onclick="toggleSelect(this)">
+    <div class="details">
+      <span class="scheme-badge badge-2">方案 A2 · 问题场景地图</span>
+      <h4>按部署阶段分组，新手友好</h4>
+      <ul>
+        <li>Hero 带<span class="highlight">问题搜索框</span>："输入你的报错..."</li>
+        <li>工具按场景分组：「准备阶段」「启动阶段」「运行阶段」「优化阶段」</li>
+        <li>每个场景 1-2 个工具，带步骤序号</li>
+        <li>底部文章按相同场景分类展示</li>
+      </ul>
+    </div>
+    <div class="mock-screen">
+      <div class="mock-nav"><span>AI部署手记</span><span>工具</span><span>文章</span><span>关于</span></div>
+      <div class="mock-hero">
+        <h4>部署遇到问题？</h4>
+        <p style="background:rgba(255,255,255,0.15);padding:4px 8px;border-radius:4px;margin:6px 0;">🔍 粘贴报错信息或搜索问题...</p>
+        <div class="btns"><span class="mock-btn mock-btn-primary">开始诊断</span><span class="mock-btn mock-btn-secondary">浏览工具</span></div>
+      </div>
+      <div class="mock-tools">
+        <span class="mock-tools-label">按部署阶段选择工具</span>
+        <div style="font-size:9px;color:#94a3b8;margin-bottom:4px;">① 准备阶段</div>
+        <div class="mock-tool-grid col2">
+          <div class="mock-tool-card"><h5>显存估算器</h5><p>判断硬件是否够用</p></div>
+          <div class="mock-tool-card"><h5>成本计算器</h5><p>本地 vs API 哪个划算</p></div>
+        </div>
+        <div style="font-size:9px;color:#94a3b8;margin:6px 0 4px;">② 启动阶段</div>
+        <div class="mock-tool-grid col2">
+          <div class="mock-tool-card featured"><h5>命令生成器</h5><p>一键生成 vLLM 启动命令</p></div>
+          <div class="mock-tool-card"><h5>报错诊断器</h5><p>启动失败快速定位</p></div>
+        </div>
+        <div style="font-size:9px;color:#94a3b8;margin:6px 0 4px;">③ 运行与优化</div>
+        <div class="mock-tool-grid col1">
+          <div class="mock-tool-card"><h5>部署选型助手</h5><p>根据场景推荐最佳方案</p></div>
+        </div>
+      </div>
+      <div class="mock-ad">AdSense 广告位</div>
+      <div class="mock-articles">
+        <div class="mock-articles-label">相关文章</div>
+        <div class="mock-article-row"><span class="tag">准备</span><span>如何选购 GPU 服务器</span></div>
+        <div class="mock-article-row"><span class="tag">启动</span><span>vLLM 启动失败排查清单</span></div>
+        <div class="mock-article-row"><span class="tag">优化</span><span>显存优化最佳实践</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 A3: 双首屏 -->
+  <div class="scheme-card" data-choice="a3" onclick="toggleSelect(this)">
+    <div class="details">
+      <span class="scheme-badge badge-3">方案 A3 · 双首屏</span>
+      <h4>第一屏放最热门工具，第二屏放其余工具</h4>
+      <ul>
+        <li>Hero 区域<span class="highlight">直接嵌入</span>「显存估算器」简化版（最常用的工具）</li>
+        <li>用户不用跳转就能用第一个工具</li>
+        <li>下方展示其余 4 个工具卡片</li>
+        <li>文章区域在更下方</li>
+      </ul>
+    </div>
+    <div class="mock-screen">
+      <div class="mock-nav"><span>AI部署手记</span><span>工具</span><span>文章</span><span>关于</span></div>
+      <div class="mock-hero" style="background: linear-gradient(135deg, #0f172a, #1e293b); text-align: left;">
+        <h4>先算一下你的 GPU 够不够用</h4>
+        <p>输入模型参数，立即估算显存需求</p>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <span style="background:rgba(255,255,255,0.1);padding:4px 8px;border-radius:4px;font-size:9px;">模型: Qwen2.5-7B</span>
+          <span style="background:rgba(255,255,255,0.1);padding:4px 8px;border-radius:4px;font-size:9px;">精度: FP16</span>
+          <span style="background:#1d4ed8;padding:4px 8px;border-radius:4px;font-size:9px;">估算 →</span>
+        </div>
+        <div style="margin-top:6px;font-size:9px;color:#94a3b8;">💡 结果: 约需要 14.2 GB 显存</div>
+      </div>
+      <div style="text-align:center;padding:6px;font-size:10px;color:#64748b;">↓ 更多工具</div>
+      <div class="mock-tools">
+        <div class="mock-tool-grid col2">
+          <div class="mock-tool-card"><h5>命令生成器</h5><p>生成 vLLM 启动命令</p></div>
+          <div class="mock-tool-card"><h5>成本计算器</h5><p>本地 vs API 成本</p></div>
+          <div class="mock-tool-card"><h5>报错诊断器</h5><p>定位常见报错</p></div>
+          <div class="mock-tool-card"><h5>部署选型助手</h5><p>推荐最佳方案</p></div>
+        </div>
+      </div>
+      <div class="mock-ad">AdSense 广告位</div>
+      <div class="mock-articles">
+        <div class="mock-articles-label">最新文章</div>
+        <div class="mock-article-row"><span class="tag">教程</span><span>vLLM + Qwen3 完整部署指南</span></div>
+        <div class="mock-article-row"><span class="tag">踩坑</span><span>Cloudflare Tunnel 常见问题</span></div>
+        <div class="mock-article-row"><span class="tag">对比</span><span>vLLM vs Ollama 深度对比</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p style="margin-top: 24px; font-size: 13px; color: #64748b;">
+  💡 <strong>AdSense 审核要点</strong>：三种方案都满足审核标准。AdSense 最看重的是内容原创性（你的文章都是原创实战）、必要法律页面（已有）、以及用户体验（不遮挡内容、不误导点击）。布局清晰、工具实用、文章有价值，通过审核的关键是<strong>持续更新高质量内容</strong>。
+</p>

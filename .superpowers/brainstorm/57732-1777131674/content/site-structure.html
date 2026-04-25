@@ -1,0 +1,73 @@
+<h2>站点结构：当前 vs 目标</h2>
+<p class="subtitle">4 个工具全部拆分为独立页面后的站点地图</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">当前结构（工具全挤在一个页面）</div>
+    <div class="mockup-body">
+      <div class="mock-nav">Logo | 首页 | 工具箱 | 文章</div>
+      <div style="display: flex; margin-top: 12px;">
+        <div style="flex: 1;">
+          <div style="font-weight: bold; margin-bottom: 8px;">tools/index.html</div>
+          <div class="mock-content" style="min-height: 300px; font-size: 13px;">
+            <div style="border: 2px solid #e74c3c; padding: 6px; margin-bottom: 6px; border-radius: 4px;">vLLM 命令生成器 ✓ 已拆分</div>
+            <div style="border: 2px solid #f39c12; padding: 6px; margin-bottom: 6px; border-radius: 4px;">显存估算器 ← 待拆分</div>
+            <div style="border: 2px solid #f39c12; padding: 6px; margin-bottom: 6px; border-radius: 4px;">成本计算器 ← 待拆分</div>
+            <div style="border: 2px solid #e74c3c; padding: 6px; margin-bottom: 6px; border-radius: 4px;">报错诊断器 ← 待替换</div>
+            <div style="border: 2px solid #f39c12; padding: 6px; border-radius: 4px;">部署选型助手 ← 待拆分</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">目标结构（每个工具独立页面）</div>
+    <div class="mockup-body">
+      <div class="mock-nav">Logo | 首页 | 工具箱 | 文章</div>
+      <div style="display: flex; margin-top: 12px;">
+        <div style="flex: 1;">
+          <div style="font-weight: bold; margin-bottom: 8px;">tools/index.html（导航页）</div>
+          <div class="mock-content" style="min-height: 80px; font-size: 13px; margin-bottom: 12px;">
+            5 个工具卡片，点击跳转到独立页面
+          </div>
+          <div style="font-weight: bold; margin-bottom: 8px;">独立工具页面</div>
+          <div style="font-size: 13px;">
+            <div style="border: 2px solid #27ae60; padding: 6px; margin-bottom: 6px; border-radius: 4px;">vllm-generator.html ✓</div>
+            <div style="border: 2px solid #f39c12; padding: 6px; margin-bottom: 6px; border-radius: 4px;">memory-calculator.html</div>
+            <div style="border: 2px solid #f39c12; padding: 6px; margin-bottom: 6px; border-radius: 4px;">cost-calculator.html</div>
+            <div style="border: 2px solid #f39c12; padding: 6px; margin-bottom: 6px; border-radius: 4px;">deployment-errors.html（新）</div>
+            <div style="border: 2px solid #f39c12; padding: 6px; border-radius: 4px;">deployment-advisor.html</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>关键决策点</h3>
+  <div class="options">
+    <div class="option" data-choice="batch" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>一次性全部做完</h3>
+        <p>一个设计文档 + 一个实现计划，4 个工具一起开发。适合希望快速上线完整工具箱的用户。</p>
+      </div>
+    </div>
+    <div class="option" data-choice="phased" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>分两批推进</h3>
+        <p>第一批：显存估算器 + 成本计算器（计算类工具，逻辑相似）。第二批：部署选型助手 + 错误知识库（决策/参考类工具）。</p>
+      </div>
+    </div>
+    <div class="option" data-choice="onebyone" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>逐个打磨</h3>
+        <p>每个工具独立设计 → 实现 → 测试。最灵活，可以按优先级调整。</p>
+      </div>
+    </div>
+  </div>
+</div>

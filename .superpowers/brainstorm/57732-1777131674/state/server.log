@@ -1,0 +1,6 @@
+{"type":"server-started","port":55451,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:55451","screen_dir":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/57732-1777131674/content","state_dir":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/57732-1777131674/state"}
+{"type":"screen-added","file":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/57732-1777131674/content/site-structure.html"}
+{"source":"user-event","type":"click","text":"C\n      \n        逐个打磨\n        每个工具独立设计 → 实现 → 测试。最灵活，可以按优先级调整。","choice":"onebyone","id":null,"timestamp":1777131787689}
+{"type":"screen-added","file":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/57732-1777131674/content/pick-first-tool.html"}
+{"type":"screen-added","file":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/57732-1777131674/content/error-kb-layouts.html"}
+{"type":"screen-added","file":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/57732-1777131674/content/waiting.html"}

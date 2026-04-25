@@ -1,0 +1,6 @@
+{"type":"server-started","port":58237,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:58237","screen_dir":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/31149-1777126619/content","state_dir":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/31149-1777126619/state"}
+{"type":"screen-added","file":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/31149-1777126619/content/waiting.html"}
+{"type":"screen-added","file":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/31149-1777126619/content/homepage-layouts.html"}
+{"type":"screen-added","file":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/31149-1777126619/content/homepage-layouts-v2.html"}
+{"type":"screen-added","file":"/Users/raowenjie/adsense-project/.superpowers/brainstorm/31149-1777126619/content/hybrid-layout.html"}
+{"type":"server-stopped","reason":"idle timeout"}

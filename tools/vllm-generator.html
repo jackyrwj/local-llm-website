@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="vLLM 启动命令生成器 — 根据模型和 GPU 一键生成原生、Docker 和 docker-compose 格式的 vLLM 启动命令，附带显存预检。">
+    <meta name="keywords" content="vLLM,命令生成器,GPU显存预检,Qwen,DeepSeek,本地部署">
+    <title>vLLM 启动命令生成器 — AI 部署手记</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="6" height="6" rx="1" fill="white"/>
+                            <rect x="10" y="2" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="2" y="10" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="10" y="10" width="6" height="6" rx="1" fill="white"/>
+                        </svg>
+                    </span>
+                    AI 部署手记
+                </a>
+            </div>
+            <nav class="main-nav" aria-label="主导航">
+                <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="../index.html">首页</a></li>
+                    <li><a href="index.html">工具箱</a></li>
+                    <li><a href="../posts/index.html">文章</a></li>
+                    <li><a href="../about.html">关于</a></li>
+                    <li><a href="../faq.html">FAQ</a></li>
+                    <li><a href="../contact.html">联系</a></li>
+                </ul>
+                <a href="index.html" class="nav-cta">返回工具箱</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="vllm-page">
+        <div class="container">
+            <nav class="vllm-breadcrumb" aria-label="面包屑">
+                <a href="../index.html">首页</a> &gt; <a href="index.html">工具箱</a> &gt; vLLM 命令生成器
+            </nav>
+
+            <div class="vllm-hero">
+                <h1>vLLM 启动命令生成器</h1>
+                <p>根据你的硬件和模型，一键生成可复制的 vLLM 启动命令。支持原生、Docker 和 docker-compose 三种格式。</p>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-mode="simple">简单模式</button>
+                    <button class="mode-btn" data-mode="advanced">高级模式</button>
+                </div>
+            </div>
+
+            <!-- 显存预检（常驻） -->
+            <div class="vram-check" id="vramCheck"></div>
+
+            <!-- 简单模式：分步向导 -->
+            <div id="simpleMode" style="display:block">
+                <div class="stepper">
+                    <div class="stepper-step active step-btn" data-step="1"><span class="num">1</span>选择模型</div>
+                    <div class="stepper-divider"></div>
+                    <div class="stepper-step step-btn" data-step="2"><span class="num">2</span>选择硬件</div>
+                    <div class="stepper-divider"></div>
+                    <div class="stepper-step step-btn" data-step="3"><span class="num">3</span>调整参数</div>
+                </div>
+
+                <div class="step-content active" data-step="1">
+                    <div class="vllm-form-grid">
+                        <label>模型
+                            <select id="modelSelect"></select>
+                            <span class="hint">从预设库选择，或在下框输入自定义模型</span>
+                        </label>
+                        <label>量化方式
+                            <select id="quantizationSelect"></select>
+                        </label>
+                        <label class="full">自定义模型路径（可选，覆盖上方选择）
+                            <input type="text" id="customModelInput" placeholder="例如：org/model-name 或本地路径">
+                            <span class="hint">HuggingFace 模型 ID 或本地绝对路径</span>
+                        </label>
+                    </div>
+                    <div class="info-card" id="modelInfoCard"></div>
+                    <div class="step-actions">
+                        <button class="btn btn-primary next-step">下一步：选择硬件</button>
+                    </div>
+                </div>
+
+                <div class="step-content" data-step="2">
+                    <div class="vllm-form-grid">
+                        <label>GPU 类型
+                            <select id="gpuSelect"></select>
+                        </label>
+                        <label>GPU 数量
+                            <input type="number" id="gpuCount" min="1" max="8" value="1">
+                        </label>
+                        <label>显存利用率
+                            <input type="number" id="utilization" min="0.5" max="0.95" step="0.01" value="0.9">
+                            <span class="hint">建议 0.85–0.9，生产环境不要超过 0.92</span>
+                        </label>
+                    </div>
+                    <div class="info-card" id="gpuInfoCard"></div>
+                    <div class="step-actions">
+                        <button class="btn btn-secondary prev-step">上一步</button>
+                        <button class="btn btn-primary next-step">下一步：调整参数</button>
+                    </div>
+                </div>
+
+                <div class="step-content" data-step="3">
+                    <div class="vllm-form-grid">
+                        <label>服务模型名
+                            <input type="text" id="servedName" placeholder="自动推断">
+                        </label>
+                        <label>上下文长度
+                            <input type="number" id="contextLen" min="512" max="200000" step="512">
+                            <span class="hint">自动填入模型推荐值，可按需调低</span>
+                        </label>
+                        <label>并发数
+                            <input type="number" id="concurrency" min="1" max="512" value="16">
+                        </label>
+                        <label>数据类型 (dtype)
+                            <select id="dtype">
+                                <option value="auto" selected>auto</option>
+                                <option value="fp16">fp16</option>
+                                <option value="bf16">bf16</option>
+                                <option value="fp8">fp8</option>
+                            </select>
+                        </label>
+                        <label>KV Cache 数据类型
+                            <select id="kvCacheDtype">
+                                <option value="auto" selected>auto</option>
+                                <option value="fp8">fp8</option>
+                                <option value="fp16">fp16</option>
+                            </select>
+                        </label>
+                        <label>端口
+                            <input type="number" id="port" min="1" max="65535" value="8000">
+                        </label>
+                        <label>主机
+                            <input type="text" id="host" value="0.0.0.0">
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <label>启用前缀缓存</label>
+                            <span class="hint">--enable-prefix-caching，适合多轮对话</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="enablePrefixCaching">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <label>启用 Chunked Prefill</label>
+                            <span class="hint">--enable-chunked-prefill，提升吞吐</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="enableChunkedPrefill">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="step-actions">
+                        <button class="btn btn-secondary prev-step">上一步</button>
+                        <button class="btn btn-primary" id="generateBtn">生成命令</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 高级模式 -->
+            <div id="advancedMode" style="display:none">
+                <div class="advanced-grid">
+                    <div class="advanced-form">
+                        <div class="advanced-group">
+                            <h4>模型与量化</h4>
+                            <div class="vllm-form-grid">
+                                <label>模型
+                                    <select id="advModelSelect"></select>
+                                </label>
+                                <label>量化方式
+                                    <select id="advQuantizationSelect"></select>
+                                </label>
+                                <label class="full">自定义模型路径
+                                    <input type="text" id="advCustomModelInput" placeholder="HuggingFace ID 或本地路径">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="advanced-group">
+                            <h4>硬件配置</h4>
+                            <div class="vllm-form-grid">
+                                <label>GPU 类型
+                                    <select id="advGpuSelect"></select>
+                                </label>
+                                <label>GPU 数量
+                                    <input type="number" id="advGpuCount" min="1" max="8" value="1">
+                                </label>
+                                <label>显存利用率
+                                    <input type="number" id="advUtilization" min="0.5" max="0.95" step="0.01" value="0.9">
+                                </label>
+                                <label>流水线并行 (PP)
+                                    <input type="number" id="advPipelineParallel" min="1" max="8" value="1">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="advanced-group">
+                            <h4>服务参数</h4>
+                            <div class="vllm-form-grid">
+                                <label>服务模型名
+                                    <input type="text" id="advServedName" placeholder="自动推断">
+                                </label>
+                                <label>上下文长度
+                                    <input type="number" id="advContextLen" min="512" max="200000" step="512">
+                                </label>
+                                <label>并发数 (max-num-seqs)
+                                    <input type="number" id="advMaxNumSeqs" min="1" max="512" value="16">
+                                </label>
+                                <label>数据类型
+                                    <select id="advDtype">
+                                        <option value="auto">auto</option>
+                                        <option value="fp16">fp16</option>
+                                        <option value="bf16">bf16</option>
+                                        <option value="fp8">fp8</option>
+                                    </select>
+                                </label>
+                                <label>KV Cache 数据类型
+                                    <select id="advKvCacheDtype">
+                                        <option value="auto">auto</option>
+                                        <option value="fp8">fp8</option>
+                                        <option value="fp16">fp16</option>
+                                    </select>
+                                </label>
+                                <label>端口
+                                    <input type="number" id="advPort" min="1" max="65535" value="8000">
+                                </label>
+                                <label>主机
+                                    <input type="text" id="advHost" value="0.0.0.0">
+                                </label>
+                                <label>LoRA 适配器路径
+                                    <input type="text" id="advLoraModules" placeholder="可选">
+                                </label>
+                                <label>聊天模板路径
+                                    <input type="text" id="advChatTemplate" placeholder="可选，自动推断留空">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="advanced-group">
+                            <h4>高级开关</h4>
+                            <div class="toggle-row">
+                                <div><label>启用前缀缓存</label></div>
+                                <label class="switch"><input type="checkbox" id="advEnablePrefixCaching"><span class="slider"></span></label>
+                            </div>
+                            <div class="toggle-row">
+                                <div><label>启用 Chunked Prefill</label></div>
+                                <label class="switch"><input type="checkbox" id="advEnableChunkedPrefill"><span class="slider"></span></label>
+                            </div>
+                            <div class="toggle-row">
+                                <div><label>信任远程代码</label></div>
+                                <label class="switch"><input type="checkbox" id="advTrustRemoteCode"><span class="slider"></span></label>
+                            </div>
+                            <div class="toggle-row">
+                                <div><label>自动工具选择</label></div>
+                                <label class="switch"><input type="checkbox" id="advEnableAutoToolChoice"><span class="slider"></span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="info-card" id="advModelInfoCard"></div>
+                        <div class="info-card" id="advGpuInfoCard"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 命令输出 -->
+            <div class="command-section" id="commandSection">
+                <h3>生成结果</h3>
+                <div class="format-tabs">
+                    <button class="format-tab active" data-format="native">原生命令</button>
+                    <button class="format-tab" data-format="docker">Docker</button>
+                    <button class="format-tab" data-format="compose">docker-compose</button>
+                </div>
+                <div class="command-box">
+                    <pre><code id="commandOutput"></code></pre>
+                </div>
+                <div class="command-actions">
+                    <button class="btn btn-primary" id="copyCommandBtn">复制命令</button>
+                </div>
+            </div>
+
+            <!-- 关联工具 -->
+            <div class="related-tools">
+                <h3>相关工具</h3>
+                <div class="related-grid">
+                    <a href="index.html#memory-calculator" class="related-card">
+                        <strong>显存估算器</strong>
+                        <span>不确定显存够不够？做更详细的显存分析。</span>
+                    </a>
+                    <a href="index.html#error-diagnoser" class="related-card">
+                        <strong>报错诊断器</strong>
+                        <span>部署遇到问题？粘贴报错快速定位。</span>
+                    </a>
+                    <a href="index.html#deployment-advisor" class="related-card">
+                        <strong>部署选型助手</strong>
+                        <span>不确定选 vLLM 还是 Ollama？先做个选型。</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <span class="footer-logo-mark" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="6" height="6" rx="1" fill="white"/>
+                                <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="1" y="9" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="9" y="9" width="6" height="6" rx="1" fill="white"/>
+                            </svg>
+                        </span>
+                        AI 部署手记
+                    </div>
+                    <p>本地大模型部署实战经验分享，涵盖 vLLM、GPUStack、Qwen 等工具的真实踩坑记录与解决方案。</p>
+                </div>
+                <div class="footer-links">
+                    <h4>快速链接</h4>
+                    <ul>
+                        <li><a href="../index.html">首页</a></li>
+                        <li><a href="index.html">工具箱</a></li>
+                        <li><a href="../posts/index.html">文章归档</a></li>
+                        <li><a href="../faq.html">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>法律信息</h4>
+                    <ul>
+                        <li><a href="../privacy-policy.html">隐私政策</a></li>
+                        <li><a href="../terms-of-service.html">使用条款</a></li>
+                        <li><a href="../cookie-policy.html">Cookie 政策</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI 部署手记. 保留所有权利。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/vllm-generator.js"></script>
+</body>
+</html>

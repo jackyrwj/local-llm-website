@@ -1,0 +1,114 @@
+<h2>部署错误知识库 — 三种布局方案</h2>
+<p class="subtitle">基于"标签云为主、搜索为辅"的交互方式，三种不同的页面组织形式</p>
+
+<div class="options">
+  <div class="option" data-choice="flat" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>平铺卡片 + 顶部标签云</h3>
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">错误知识库</div>
+        <div class="mockup-body" style="font-size: 12px;">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+            <span style="background: #3498db; color: white; padding: 2px 8px; border-radius: 12px;">全部</span>
+            <span style="background: #ecf0f1; padding: 2px 8px; border-radius: 12px;">CUDA</span>
+            <span style="background: #ecf0f1; padding: 2px 8px; border-radius: 12px;">Docker</span>
+            <span style="background: #ecf0f1; padding: 2px 8px; border-radius: 12px;">vLLM</span>
+            <span style="background: #ecf0f1; padding: 2px 8px; border-radius: 12px;">OOM</span>
+            <span style="background: #ecf0f1; padding: 2px 8px; border-radius: 12px;">启动失败</span>
+          </div>
+          <div style="border: 1px solid #ddd; padding: 8px; margin-bottom: 8px; border-radius: 4px;">
+            <div style="font-weight: bold;">CUDA OutOfMemoryError</div>
+            <div style="color: #666; margin: 4px 0;">模型权重或 KV Cache 超过显存容量...</div>
+            <div style="display: flex; gap: 4px;">
+              <span style="background: #e74c3c; color: white; padding: 1px 6px; border-radius: 4px; font-size: 10px;">CUDA</span>
+              <span style="background: #f39c12; color: white; padding: 1px 6px; border-radius: 4px; font-size: 10px;">OOM</span>
+            </div>
+          </div>
+          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">
+            <div style="font-weight: bold;">端口已被占用</div>
+            <div style="color: #666; margin: 4px 0;">address already in use...</div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 8px; font-size: 13px;">所有错误卡片直接平铺，点击标签即时过滤。最直观，适合错误数量少（10-15 条）。</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="category" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>分类入口 + 二级列表</h3>
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">错误知识库</div>
+        <div class="mockup-body" style="font-size: 12px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="border: 1px solid #ddd; padding: 12px; border-radius: 4px; text-align: center;">
+              <div style="font-size: 24px;">🔥</div>
+              <div style="font-weight: bold;">CUDA 相关</div>
+              <div style="color: #666;">4 条错误</div>
+            </div>
+            <div style="border: 1px solid #ddd; padding: 12px; border-radius: 4px; text-align: center;">
+              <div style="font-size: 24px;">🐳</div>
+              <div style="font-weight: bold;">Docker 相关</div>
+              <div style="color: #666;">3 条错误</div>
+            </div>
+            <div style="border: 1px solid #ddd; padding: 12px; border-radius: 4px; text-align: center;">
+              <div style="font-size: 24px;">⚡</div>
+              <div style="font-weight: bold;">vLLM 相关</div>
+              <div style="color: #666;">5 条错误</div>
+            </div>
+            <div style="border: 1px solid #ddd; padding: 12px; border-radius: 4px; text-align: center;">
+              <div style="font-size: 24px;">🌐</div>
+              <div style="font-weight: bold;">网络代理</div>
+              <div style="color: #666;">2 条错误</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 8px; font-size: 13px;">先按主分类展示入口卡片，点击进入后显示该分类下的错误列表。结构更清晰，但多一次点击。</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="sidebar" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>左侧分类导航 + 右侧详情</h3>
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">错误知识库</div>
+        <div class="mockup-body" style="font-size: 12px; display: flex; gap: 8px;">
+          <div style="width: 120px; border-right: 1px solid #ddd; padding-right: 8px;">
+            <div style="font-weight: bold; margin-bottom: 8px;">分类</div>
+            <div style="color: #3498db; margin-bottom: 4px;">全部</div>
+            <div style="margin-bottom: 4px;">CUDA</div>
+            <div style="margin-bottom: 4px;">Docker</div>
+            <div style="margin-bottom: 4px;">vLLM</div>
+            <div style="margin-bottom: 4px;">网络</div>
+          </div>
+          <div style="flex: 1;">
+            <div style="border: 1px solid #ddd; padding: 8px; margin-bottom: 8px; border-radius: 4px;">
+              <div style="font-weight: bold;">CUDA OOM</div>
+              <div style="color: #666; margin: 4px 0;">显存不足...</div>
+            </div>
+            <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">
+              <div style="font-weight: bold;">驱动版本不匹配</div>
+              <div style="color: #666; margin: 4px 0;">CUDA driver version...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 8px; font-size: 13px;">左侧固定分类导航，右侧实时切换内容。浏览效率最高，但移动端需要额外适配。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>我的建议</h3>
+  <p>考虑到首批只有 10-15 条错误，推荐 <strong>方案 A（平铺卡片 + 顶部标签云）</strong>。原因：</p>
+  <ul>
+    <li>错误数量少时，平铺最直观，用户一眼能看到全部内容</li>
+    <li>标签云过滤足够高效，不需要额外的分类层级</li>
+    <li>实现最简单，和 vLLM 生成器一致的页面结构</li>
+    <li>未来错误增多时，可以平滑升级到方案 C 的侧边栏模式</li>
+  </ul>
+</div>

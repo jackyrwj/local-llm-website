@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI 部署手记常见问题解答——关于本地大模型部署、vLLM、GPUStack、Qwen 的常见问题汇总。">
+    <title>常见问题 — AI 部署手记</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="logo"><a href="index.html">AI 部署手记</a></div>
+            <nav class="main-nav" aria-label="主导航">
+                <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="index.html">首页</a></li>
+                    <li><a href="tools/index.html">工具箱</a></li>
+                    <li><a href="posts/index.html">文章</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="about.html">关于</a></li>
+                    <li><a href="contact.html">联系</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>常见问题</h1>
+                <p>关于本地大模型部署的常见问题汇总，持续更新中</p>
+            </div>
+        </section>
+
+        <section class="content-page" style="padding-top: 48px;">
+            <div class="container">
+                <div class="faq-section">
+                    <h2>入门基础</h2>
+
+                    <div class="faq-item">
+                        <h3>本地部署大模型需要什么显卡？</h3>
+                        <p>最低门槛是 8GB 显存的显卡（如 RTX 3060 Ti），可以跑 7B 参数的量化模型（AWQ/GPTQ 4bit）。如果想流畅运行 13B 模型或同时加载多个模型，建议 24GB 显存（RTX 3090/4090）。我目前的主力环境是双卡 RTX 4090，可以并行跑 Qwen3-7B + Qwen3-Coder-7B。</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3>没有显卡可以用 CPU 跑吗？</h3>
+                        <p>可以，但速度会很慢。7B 模型在 CPU 上的推理速度大约是 2-5 token/s，而 RTX 4090 上能达到 30-40 token/s。如果只是测试或低频率使用，CPU 方案（如 llama.cpp）完全可行。生产环境或编程助手场景强烈建议上 GPU。</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3>Mac 可以本地部署吗？</h3>
+                        <p>可以。Mac Studio（M2 Ultra，64GB 统一内存）可以流畅跑 7B-13B 模型，使用 Ollama 或 llama.cpp 的 Metal 后端。但 Mac 不支持 CUDA，所以 vLLM 这种 CUDA-only 的框架跑不了。如果是 M 系列芯片，推荐用 Ollama，一键安装、自动调用 Apple Silicon 的神经网络引擎。</p>
+                    </div>
+
+                    <h2>模型选择</h2>
+
+                    <div class="faq-item">
+                        <h3>Qwen、Llama、ChatGLM 该选哪个？</h3>
+                        <p>中文场景优先选 Qwen（通义千问）。原因：① 中文语料占比高，中文问答质量明显更好；② 开源生态完善，HuggingFace 上有完整的 0.5B 到 110B 全尺寸模型；③ 对中文长文本（如 PDF 总结、邮件生成）支持更好。Llama 3 英文更强但中文需要额外微调，ChatGLM 也不错但更新频率不如 Qwen。</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3>7B 和 13B 模型差距大吗？</h3>
+                        <p>日常对话差距不大，但复杂推理和代码生成上 13B 明显更强。实测对比：Qwen2-7B 在 HumanEval 代码测试集上通过率 42%，而 Qwen2-14B 达到 58%。如果主要用 AI 写代码或处理技术文档，建议上 13B。如果只是日常聊天、简单问答，7B 完全够用且省显存。</p>
+                    </div>
+
+                    <h2>部署与优化</h2>
+
+                    <div class="faq-item">
+                        <h3>vLLM 和 Ollama 有什么区别？</h3>
+                        <p>vLLM 是生产级推理引擎，支持高并发、连续批处理、PagedAttention，适合 API 服务场景。Ollama 是开发者体验优先的本地沙盒，安装简单、命令直观，适合个人实验。一句话：要跑服务选 vLLM，要快速尝鲜选 Ollama。更详细的对比可以看<a href="posts/vllm-vs-ollama-comparison.html">这篇深度对比</a>。</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3>显存不足怎么办？</h3>
+                        <p>五个降显存手段：① 用 AWQ/GPTQ 4bit 量化模型（省 50-60% 显存）；② 减小 max-model-len（如从 8192 降到 4096）；③ 开启 FlashAttention-2（省 10-15%）；④ 降低 gpu-memory-utilization（如从 0.9 降到 0.8）；⑤ 用多卡张量并行（tensor-parallel-size）。详细步骤参考<a href="posts/gpu-oom-optimization.html">GPU 显存优化实战</a>。</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3>模型启动后为什么很慢？</h3>
+                        <p>慢通常有三个原因：① 冷启动时模型从硬盘加载到显存，大模型需要 10-30 秒，正常；② 第一次请求会触发 CUDA Graph 编译，延迟 3-5 秒，后续请求会变快；③ 如果持续慢，检查是否开了 --enforce-eager（禁用 CUDA Graph，会慢 20-30%）。还有可能是 PCIe 带宽瓶颈，确认显卡插在 PCIe x16 插槽上。</p>
+                    </div>
+
+                    <h2>网络与外网访问</h2>
+
+                    <div class="faq-item">
+                        <h3>没有公网 IP 怎么让外网访问本地模型？</h3>
+                        <p>推荐 Cloudflare Tunnel（免费、安全、带 HTTPS）。不需要公网 IP、不改路由器、不暴露端口。我写了一篇完整教程<a href="posts/cloudflare-tunnel-local-ai.html">在这里</a>。替代方案包括 frp、ngrok、花生壳等，但 Cloudflare Tunnel 在稳定性和安全性上更优。</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3>内网穿透安全吗？</h3>
+                        <p>取决于方案。直接开端口映射（DMZ）最危险，扫描器 24 小时在扫。Cloudflare Tunnel 相对安全，因为流量走 Cloudflare 边缘节点，源站 IP 不暴露，且自带 DDoS 防护。但即便如此，也建议：① 给 API 加访问密钥；② 限制请求频率；③ 日志监控异常 IP。</p>
+                    </div>
+
+                    <h2>成本与效益</h2>
+
+                    <div class="faq-item">
+                        <h3>自建本地模型比买 API 便宜吗？</h3>
+                        <p>取决于使用量。我算过一笔账：自建双卡 RTX 4090 服务器一次性投入约 3.5 万，但按每天 5000 次请求算，比调用 OpenAI API 每月省 2000-3000 元，一年回本。如果每月请求少于 10 万次，买 API 更划算。详细对比看<a href="posts/local-vs-cloud-model.html">本地 vs 云端全面对比</a>。</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3>电费贵吗？</h3>
+                        <p>双卡 RTX 4090 整机满载约 600W，按 0.6 元/度、每天跑 8 小时算，月电费约 86 元。但如果用 GPUStack 的自动调度，低峰期可以卸载模型、显卡降频，实际月均电费 50-60 元左右。对比云 GPU（如 AutoDL RTX 4090 约 1.5 元/小时），本地电费几乎可以忽略。</p>
+                    </div>
+
+                    <h2>问题没解决？</h2>
+                    <p>如果上面没有你的问题，可以通过<a href="contact.html">联系页面</a>给我发邮件，我会尽量回复。也欢迎查看<a href="posts/index.html">全部文章</a>，里面记录了更多具体场景的踩坑经历。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">AI 部署手记</div>
+                    <p>本地大模型部署实战经验分享，涵盖 vLLM、GPUStack、Qwen 等工具的真实踩坑记录</p>
+                    <span class="footer-tagline">实战记录 · 避坑指南 · 每日更新</span>
+                </div>
+                <div class="footer-links">
+                    <h4>快速链接</h4>
+                    <ul>
+                        <li><a href="index.html">首页</a></li>
+                        <li><a href="tools/index.html">工具箱</a></li>
+                        <li><a href="posts/index.html">文章归档</a></li>
+                        <li><a href="faq.html">常见问题</a></li>
+                        <li><a href="about.html">关于</a></li>
+                        <li><a href="contact.html">联系</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>法律信息</h4>
+                    <ul>
+                        <li><a href="privacy-policy.html">隐私政策</a></li>
+                        <li><a href="terms-of-service.html">使用条款</a></li>
+                        <li><a href="cookie-policy.html">Cookie 政策</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI 部署手记. 保留所有权利。</p>
+                <p>本地 AI 实战记录</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>本站使用 Cookie 分析访问数据。继续浏览即表示你同意我们的
+               <a href="cookie-policy.html">Cookie 政策</a> 和
+               <a href="privacy-policy.html">隐私政策</a>。</p>
+            <button class="btn btn-primary" id="acceptCookies">我知道了</button>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

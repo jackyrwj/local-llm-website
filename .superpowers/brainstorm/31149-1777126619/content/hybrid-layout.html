@@ -1,0 +1,186 @@
+
+<style>
+  .hybrid-mock { max-width: 640px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; font-size: 11px; }
+  .h-nav { display: flex; gap: 8px; padding: 8px; background: #f8fafc; border-radius: 4px; margin-bottom: 12px; font-size: 9px; }
+  .h-nav span { color: #64748b; }
+  .h-hero { padding: 20px; background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 6px; color: white; text-align: center; margin-bottom: 12px; }
+  .h-hero h3 { margin: 0 0 4px; font-size: 14px; }
+  .h-hero p { margin: 0 0 10px; font-size: 10px; opacity: 0.85; }
+  .h-hero .h-btns { display: flex; gap: 8px; justify-content: center; }
+  .h-btn { padding: 5px 14px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .h-btn-p { background: #1d4ed8; color: white; }
+  .h-btn-s { background: rgba(255,255,255,0.1); color: white; }
+  .h-search { margin: 8px auto 0; max-width: 280px; background: rgba(255,255,255,0.08); padding: 5px 10px; border-radius: 4px; font-size: 10px; color: #94a3b8; text-align: left; }
+
+  .h-filters { display: flex; gap: 6px; justify-content: center; margin: 12px 0; }
+  .h-filter { padding: 4px 10px; border-radius: 4px; font-size: 10px; border: 1px solid #e2e8f0; color: #475569; background: white; }
+  .h-filter.active { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+
+  .h-tools-label { font-size: 11px; font-weight: 700; color: #0f172a; margin-bottom: 8px; text-align: center; }
+  .h-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+  .h-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: 66%; margin: 0 auto; }
+  .h-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; background: white; position: relative; }
+  .h-card:hover { border-color: #1d4ed8; }
+  .h-card .stage { position: absolute; top: 6px; right: 6px; font-size: 8px; padding: 1px 5px; border-radius: 3px; font-weight: 600; }
+  .stage-prep { background: #dbeafe; color: #1d4ed8; }
+  .stage-start { background: #fef3c7; color: #d97706; }
+  .stage-run { background: #dcfce7; color: #059669; }
+  .h-card .icon { width: 24px; height: 24px; background: #f1f5f9; border-radius: 5px; margin-bottom: 6px; }
+  .h-card h5 { margin: 0 0 3px; font-size: 11px; color: #0f172a; }
+  .h-card p { margin: 0; font-size: 9px; color: #64748b; line-height: 1.4; }
+  .h-card .meta { margin-top: 6px; font-size: 8px; color: #94a3b8; }
+
+  .h-ad { padding: 10px; background: #fef2f2; border-radius: 4px; text-align: center; font-size: 9px; color: #dc2626; margin: 10px 0; }
+
+  .h-articles { padding: 12px; background: #f8fafc; border-radius: 6px; }
+  .h-articles-label { font-size: 11px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+  .h-article { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid #e2e8f0; }
+  .h-article:last-child { border-bottom: none; }
+  .h-article .thumb { width: 40px; height: 28px; background: #e2e8f0; border-radius: 3px; flex-shrink: 0; }
+  .h-article .info h6 { margin: 0; font-size: 10px; color: #0f172a; font-weight: 600; }
+  .h-article .info span { font-size: 8px; color: #94a3b8; }
+  .h-article .tag { padding: 1px 5px; border-radius: 2px; font-size: 8px; margin-left: auto; flex-shrink: 0; }
+  .tag-tut { background: #e0f2fe; color: #0284c7; }
+  .tag-bug { background: #ffedd5; color: #ea580c; }
+  .tag-cmp { background: #ede9fe; color: #7c3aed; }
+
+  .h-trust { display: flex; gap: 16px; justify-content: center; padding: 12px; }
+  .h-trust span { font-size: 10px; color: #64748b; }
+
+  .question-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin-top: 20px; }
+  .question-box h4 { margin: 0 0 10px; font-size: 13px; color: #0c4a6e; }
+  .q-options { display: flex; flex-direction: column; gap: 8px; }
+  .q-option { display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e0f2fe; cursor: pointer; }
+  .q-option:hover { border-color: #0284c7; }
+  .q-option .radio { width: 16px; height: 16px; border: 2px solid #cbd5e1; border-radius: 50%; flex-shrink: 0; margin-top: 1px; }
+  .q-option strong { font-size: 12px; color: #0f172a; display: block; margin-bottom: 2px; }
+  .q-option span { font-size: 11px; color: #475569; }
+</style>
+
+<h2>混合方案：A1 网格 + A2 阶段分组</h2>
+<p class="subtitle">5 个工具等宽网格排列，每张卡片带阶段标签。请确认下方细节。</p>
+
+<div class="hybrid-mock">
+  <div class="h-nav"><span>AI 部署手记</span><span>工具箱</span><span>文章</span><span>关于</span><span>联系</span></div>
+
+  <div class="h-hero">
+    <h3>本地大模型部署工具箱</h3>
+    <p>从选型到上线，5 个工具帮你搞定 vLLM、GPUStack、Qwen 部署</p>
+    <div class="h-btns">
+      <span class="h-btn h-btn-p">开始使用</span>
+      <span class="h-btn h-btn-s">查看教程</span>
+    </div>
+    <div class="h-search">🔍 搜索报错或问题...</div>
+  </div>
+
+  <div class="h-filters">
+    <span class="h-filter active">全部工具</span>
+    <span class="h-filter">准备阶段</span>
+    <span class="h-filter">启动阶段</span>
+    <span class="h-filter">运行阶段</span>
+  </div>
+
+  <div class="h-tools-label">5 个部署工具</div>
+  <div class="h-grid">
+    <div class="h-card">
+      <span class="stage stage-prep">准备</span>
+      <div class="icon"></div>
+      <h5>显存估算器</h5>
+      <p>输入模型参数，估算 GPU 显存是否够用</p>
+      <div class="meta">💡 最常用</div>
+    </div>
+    <div class="h-card">
+      <span class="stage stage-prep">准备</span>
+      <div class="icon"></div>
+      <h5>成本计算器</h5>
+      <p>对比自建 GPU 与云 API 的月成本</p>
+      <div class="meta">📊 省钱利器</div>
+    </div>
+    <div class="h-card">
+      <span class="stage stage-start">启动</span>
+      <div class="icon"></div>
+      <h5>vLLM 命令生成器</h5>
+      <p>按模型和显卡生成可复制的启动命令</p>
+      <div class="meta">⚡ 一键生成</div>
+    </div>
+  </div>
+  <div class="h-grid-2">
+    <div class="h-card">
+      <span class="stage stage-start">启动</span>
+      <div class="icon"></div>
+      <h5>报错诊断器</h5>
+      <p>粘贴报错文本，快速定位问题原因</p>
+      <div class="meta">🔧 救急必备</div>
+    </div>
+    <div class="h-card">
+      <span class="stage stage-run">运行</span>
+      <div class="icon"></div>
+      <h5>部署选型助手</h5>
+      <p>根据场景推荐 Ollama / vLLM / API</p>
+      <div class="meta">🎯 选型指南</div>
+    </div>
+  </div>
+
+  <div class="h-ad">AdSense 广告位（内容流中间）</div>
+
+  <div class="h-articles">
+    <div class="h-articles-label">最新实战文章</div>
+    <div class="h-article">
+      <div class="thumb"></div>
+      <div class="info">
+        <h6>vLLM + Qwen3 完整部署指南：从零到 API 服务</h6>
+        <span>2026.04.23 · 12 分钟阅读</span>
+      </div>
+      <span class="tag tag-tut">教程</span>
+    </div>
+    <div class="h-article">
+      <div class="thumb"></div>
+      <div class="info">
+        <h6>Qwen 模型上下文爆满问题解决方案</h6>
+        <span>2026.04.23 · 6 分钟阅读</span>
+      </div>
+      <span class="tag tag-bug">踩坑</span>
+    </div>
+    <div class="h-article">
+      <div class="thumb"></div>
+      <div class="info">
+        <h6>本地模型 vs 云端模型：成本全面对比</h6>
+        <span>2026.04.23 · 8 分钟阅读</span>
+      </div>
+      <span class="tag tag-cmp">对比</span>
+    </div>
+  </div>
+
+  <div class="h-trust">
+    <span>5 个工具</span>
+    <span>20+ 篇文章</span>
+    <span>0 后端依赖</span>
+    <span>浏览器本地计算</span>
+  </div>
+</div>
+
+<div class="question-box">
+  <h4>请确认以下细节：</h4>
+  <div class="q-options">
+    <div class="q-option" onclick="toggleSelect(this)">
+      <div class="radio"></div>
+      <div>
+        <strong>搜索框保留</strong>
+        <span>Hero 里放「搜索报错/问题」输入框，点击跳转到报错诊断器。适合带着问题来的用户。</span>
+      </div>
+    </div>
+    <div class="q-option" onclick="toggleSelect(this)">
+      <div class="radio"></div>
+n      <div>
+        <strong>搜索框去掉</strong>
+        <span>Hero 只保留标题 + 两个 CTA 按钮，更简洁。用户通过阶段筛选或卡片直接找到工具。</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top: 16px; font-size: 13px; color: #64748b;">
+  同时请告诉我：
+  <br>• <strong>阶段筛选</strong>是仅作标签展示（如图），还是可以点击过滤工具？
+  <br>• <strong>3+2 网格</strong>（上行 3 个、下行 2 个居中）你觉得合适吗？还是 2+2+1 或其他排列？
+</p>

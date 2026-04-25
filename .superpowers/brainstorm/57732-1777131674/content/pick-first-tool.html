@@ -1,0 +1,37 @@
+<h2>逐个打磨 — 先从哪个工具开始？</h2>
+<p class="subtitle">点击选择第一个要独立化的工具</p>
+
+<div class="cards">
+  <div class="card" data-choice="memory" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">🧮</div>
+    <div class="card-body">
+      <h3>显存估算器</h3>
+      <p>估算模型权重、KV Cache、运行时开销。适合部署前判断是否 OOM。</p>
+      <span class="label">计算类 · 已有基础逻辑</span>
+    </div>
+  </div>
+  <div class="card" data-choice="cost" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">💰</div>
+    <div class="card-body">
+      <h3>成本计算器</h3>
+      <p>对比自建 GPU 与云端 API 的月成本和回本周期。</p>
+      <span class="label">计算类 · 已有基础逻辑</span>
+    </div>
+  </div>
+  <div class="card" data-choice="errors" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">📚</div>
+    <div class="card-body">
+      <h3>部署错误知识库</h3>
+      <p>可搜索/按标签筛选的常见部署错误百科，含原因和修复方式。</p>
+      <span class="label">全新工具 · 替换报错诊断器</span>
+    </div>
+  </div>
+  <div class="card" data-choice="advisor" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">🎯</div>
+    <div class="card-body">
+      <h3>部署选型助手</h3>
+      <p>根据场景、硬件、并发推荐 Ollama、vLLM、GPUStack 或云 API。</p>
+      <span class="label">决策类 · 已有基础逻辑</span>
+    </div>
+  </div>
+</div>
