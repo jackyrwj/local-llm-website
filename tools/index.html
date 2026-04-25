@@ -113,7 +113,7 @@
                         <strong>部署错误知识库</strong>
                         <span>浏览/搜索常见部署错误，含根因分析和可执行的修复方案。</span>
                     </a>
-                    <a href="#deployment-advisor" class="tool-link-card">
+                    <a href="deployment-advisor.html" class="tool-link-card">
                         <strong>模型部署选型助手</strong>
                         <span>根据使用场景推荐 Ollama、vLLM、GPUStack 或云 API。</span>
                     </a>
@@ -218,63 +218,6 @@
                             <div class="result-label">成本结果</div>
                             <div class="metric-stack" id="costResult"></div>
                             <div class="result-note" id="costAdvice"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="tool-section" id="deployment-advisor">
-            <div class="container">
-                <div class="tool-shell" data-tool="advisor">
-                    <div class="tool-copy">
-                        <span class="post-category cat-cmp">选型助手</span>
-                        <h2>模型部署选型助手</h2>
-                        <p>根据用途、并发、团队规模和硬件条件推荐部署方案。输出不是绝对答案，而是一个可讨论的起点。</p>
-                    </div>
-                    <div class="tool-grid">
-                        <form class="tool-form" id="advisorForm">
-                            <div class="form-grid">
-                                <label>主要用途
-                                    <select name="purpose">
-                                        <option value="personal">个人试用 / 本地聊天</option>
-                                        <option value="dev">开发调试 / 原型验证</option>
-                                        <option value="team">团队内部 API</option>
-                                        <option value="prod">生产级高并发服务</option>
-                                    </select>
-                                </label>
-                                <label>预计并发
-                                    <input type="number" name="concurrency" min="1" max="10000" step="1" value="5">
-                                </label>
-                                <label>硬件条件
-                                    <select name="hardware">
-                                        <option value="none">暂无 GPU</option>
-                                        <option value="mac">Mac / 集成显卡</option>
-                                        <option value="single">单张消费级 GPU</option>
-                                        <option value="multi">多张 GPU / 服务器</option>
-                                    </select>
-                                </label>
-                                <label>部署经验
-                                    <select name="experience">
-                                        <option value="beginner">刚开始部署</option>
-                                        <option value="intermediate">会 Docker 和基础 Linux</option>
-                                        <option value="advanced">熟悉 GPU 服务和监控</option>
-                                    </select>
-                                </label>
-                                <label>优先目标
-                                    <select name="priority">
-                                        <option value="simple">简单省心</option>
-                                        <option value="cost">长期低成本</option>
-                                        <option value="performance">吞吐和延迟</option>
-                                        <option value="privacy">数据隐私</option>
-                                    </select>
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-primary">生成选型建议</button>
-                        </form>
-                        <div class="tool-result">
-                            <div class="result-label">推荐方案</div>
-                            <div id="advisorResult" class="advisor-result"></div>
                         </div>
                     </div>
                 </div>

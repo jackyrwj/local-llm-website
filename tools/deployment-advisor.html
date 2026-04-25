@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="模型部署选型助手 — 根据使用场景、硬件条件和团队经验，智能推荐 Ollama、vLLM、GPUStack 或云端 API 部署方案，附带模型推荐和启动命令生成。">
+    <meta name="keywords" content="AI部署选型,vLLM,Ollama,GPUStack,大模型部署方案,模型推荐,显存估算">
+    <title>模型部署选型助手 — AI 部署手记</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="6" height="6" rx="1" fill="white"/>
+                            <rect x="10" y="2" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="2" y="10" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="10" y="10" width="6" height="6" rx="1" fill="white"/>
+                        </svg>
+                    </span>
+                    AI 部署手记
+                </a>
+            </div>
+            <nav class="main-nav" aria-label="主导航">
+                <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="../index.html">首页</a></li>
+                    <li><a href="index.html">工具箱</a></li>
+                    <li><a href="../posts/index.html">文章</a></li>
+                    <li><a href="../about.html">关于</a></li>
+                    <li><a href="../faq.html">FAQ</a></li>
+                    <li><a href="../contact.html">联系</a></li>
+                </ul>
+                <a href="index.html" class="nav-cta">返回工具箱</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="advisor-page">
+        <div class="container">
+            <nav class="advisor-breadcrumb" aria-label="面包屑">
+                <a href="../index.html">首页</a> &gt; <a href="index.html">工具箱</a> &gt; 部署选型助手
+            </nav>
+
+            <div class="advisor-hero">
+                <h1>模型部署选型助手</h1>
+                <p>根据你的场景、硬件和团队条件，推荐最适合的部署方案</p>
+            </div>
+
+            <!-- Stepper -->
+            <div class="stepper" id="stepper">
+                <div class="stepper-step active" data-step="1"><span class="num">1</span>场景与目标</div>
+                <div class="stepper-divider"></div>
+                <div class="stepper-step" data-step="2"><span class="num">2</span>硬件与规模</div>
+                <div class="stepper-divider"></div>
+                <div class="stepper-step" data-step="3"><span class="num">3</span>经验与偏好</div>
+                <div class="stepper-divider"></div>
+                <div class="stepper-step" data-step="4"><span class="num">4</span>选型结果</div>
+            </div>
+
+            <!-- Step 1: 场景与目标 -->
+            <div class="step-content active" data-step="1">
+                <div class="advisor-step-title">Step 1: 场景与目标</div>
+
+                <div class="advisor-question">
+                    <h3>主要用途 <span class="required">*</span></h3>
+                    <div class="option-grid" data-name="purpose">
+                        <label class="option-card">
+                            <input type="radio" name="purpose" value="personal">
+                            <span class="card-icon">👤</span>
+                            <strong>个人试用 / 本地聊天</strong>
+                            <span>自己想体验大模型，或本地运行聊天机器人</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="purpose" value="dev">
+                            <span class="card-icon">💻</span>
+                            <strong>开发调试 / 原型验证</strong>
+                            <span>做 AI 应用开发，需要 API 接口测试</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="purpose" value="team">
+                            <span class="card-icon">👥</span>
+                            <strong>团队内部 API</strong>
+                            <span>给团队/部门提供统一模型服务入口</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="purpose" value="prod">
+                            <span class="card-icon">🚀</span>
+                            <strong>生产级高并发服务</strong>
+                            <span>面向用户的产品级部署，需要稳定性和吞吐</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="advisor-question">
+                    <h3>优先目标 <span class="required">*</span></h3>
+                    <div class="option-grid compact" data-name="priority">
+                        <label class="option-card">
+                            <input type="radio" name="priority" value="simple">
+                            <strong>简单省心</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="priority" value="cost">
+                            <strong>长期低成本</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="priority" value="performance">
+                            <strong>吞吐和延迟</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="priority" value="privacy">
+                            <strong>数据隐私</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-primary next-step" disabled>下一步</button>
+                </div>
+            </div>
+
+            <!-- Step 2: 硬件与规模 -->
+            <div class="step-content" data-step="2">
+                <div class="advisor-step-title">Step 2: 硬件与规模</div>
+
+                <div class="advisor-question">
+                    <h3>硬件条件 <span class="required">*</span></h3>
+                    <div class="option-grid" data-name="hardware">
+                        <label class="option-card">
+                            <input type="radio" name="hardware" value="none">
+                            <span class="card-icon">💻</span>
+                            <strong>暂无 GPU</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="hardware" value="mac">
+                            <span class="card-icon">🍎</span>
+                            <strong>Mac / 集成显卡</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="hardware" value="single">
+                            <span class="card-icon">🎮</span>
+                            <strong>单张消费级 GPU (8-24GB)</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="hardware" value="multi">
+                            <span class="card-icon">🖥️</span>
+                            <strong>多张 GPU / 服务器</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="advisor-question">
+                    <h3>预计并发</h3>
+                    <div class="slider-group">
+                        <input type="range" id="concurrencySlider" min="1" max="10000" value="5" step="1">
+                        <div class="slider-value-wrap">
+                            <input type="number" id="concurrencyInput" min="1" max="10000" value="5">
+                            <span class="concurrency-label" id="concurrencyLabel">个人使用</span>
+                        </div>
+                    </div>
+                    <div class="slider-marks">
+                        <span>1</span>
+                        <span>10</span>
+                        <span>100</span>
+                        <span>1K</span>
+                        <span>10K</span>
+                    </div>
+                </div>
+
+                <div class="advisor-question">
+                    <h3>特定模型需求 <span class="hint">（多选，可选）</span></h3>
+                    <div class="option-grid compact multi" data-name="modelNeeds">
+                        <label class="option-card">
+                            <input type="checkbox" name="modelNeeds" value="chinese">
+                            <strong>中文能力强</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="checkbox" name="modelNeeds" value="code">
+                            <strong>代码能力</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="checkbox" name="modelNeeds" value="multimodal">
+                            <strong>多模态</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="checkbox" name="modelNeeds" value="tools">
+                            <strong>工具调用 (Function Calling)</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="checkbox" name="modelNeeds" value="none">
+                            <strong>没有特殊要求</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-secondary prev-step">上一步</button>
+                    <button class="btn btn-primary next-step" disabled>下一步</button>
+                </div>
+            </div>
+
+            <!-- Step 3: 经验与偏好 -->
+            <div class="step-content" data-step="3">
+                <div class="advisor-step-title">Step 3: 经验与偏好</div>
+
+                <div class="advisor-question">
+                    <h3>部署经验 <span class="required">*</span></h3>
+                    <div class="option-grid compact" data-name="experience">
+                        <label class="option-card">
+                            <input type="radio" name="experience" value="beginner">
+                            <strong>刚开始部署</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="experience" value="intermediate">
+                            <strong>会 Docker 和基础 Linux</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="experience" value="advanced">
+                            <strong>熟悉 GPU 服务和监控</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="advisor-question">
+                    <h3>部署偏好 <span class="required">*</span></h3>
+                    <div class="option-grid compact" data-name="preference">
+                        <label class="option-card">
+                            <input type="radio" name="preference" value="local">
+                            <strong>优先本地/私有部署</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="preference" value="both">
+                            <strong>云端也可以接受</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="preference" value="cloud">
+                            <strong>优先云端（不想运维）</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="advisor-question">
+                    <h3>预算敏感度 <span class="required">*</span></h3>
+                    <div class="option-grid compact" data-name="budget">
+                        <label class="option-card">
+                            <input type="radio" name="budget" value="tight">
+                            <strong>预算有限，尽量省钱</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="budget" value="medium">
+                            <strong>中等，性价比优先</strong>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="budget" value="high">
+                            <strong>预算充足，追求体验</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-secondary prev-step">上一步</button>
+                    <button class="btn btn-primary next-step" disabled>生成选型结果</button>
+                </div>
+            </div>
+
+            <!-- Step 4: 选型结果 -->
+            <div class="step-content" data-step="4">
+                <div class="advisor-step-title">Step 4: 选型结果</div>
+
+                <div id="resultContainer"></div>
+
+                <!-- 重新选型 -->
+                <div class="advisor-reset">
+                    <button class="btn btn-secondary" id="resetBtn">重新选型</button>
+                </div>
+            </div>
+
+            <!-- 关联工具 -->
+            <div class="related-tools">
+                <h3>相关工具</h3>
+                <div class="related-grid">
+                    <a href="vllm-generator.html" class="related-card">
+                        <strong>vLLM 启动命令生成器</strong>
+                        <span>根据推荐的模型和硬件，一键生成启动命令。</span>
+                    </a>
+                    <a href="index.html#memory-calculator" class="related-card">
+                        <strong>显存估算器</strong>
+                        <span>确认你的硬件是否满足模型显存需求。</span>
+                    </a>
+                    <a href="deployment-errors.html" class="related-card">
+                        <strong>部署错误知识库</strong>
+                        <span>部署遇到问题？搜索常见错误和修复方案。</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <span class="footer-logo-mark" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="6" height="6" rx="1" fill="white"/>
+                                <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="1" y="9" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="9" y="9" width="6" height="6" rx="1" fill="white"/>
+                            </svg>
+                        </span>
+                        AI 部署手记
+                    </div>
+                    <p>本地大模型部署实战经验分享，涵盖 vLLM、GPUStack、Qwen 等工具的真实踩坑记录与解决方案。</p>
+                </div>
+                <div class="footer-links">
+                    <h4>快速链接</h4>
+                    <ul>
+                        <li><a href="../index.html">首页</a></li>
+                        <li><a href="index.html">工具箱</a></li>
+                        <li><a href="../posts/index.html">文章归档</a></li>
+                        <li><a href="../faq.html">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>法律信息</h4>
+                    <ul>
+                        <li><a href="../privacy-policy.html">隐私政策</a></li>
+                        <li><a href="../terms-of-service.html">使用条款</a></li>
+                        <li><a href="../cookie-policy.html">Cookie 政策</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI 部署手记. 保留所有权利。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/deployment-advisor.js"></script>
+</body>
+</html>

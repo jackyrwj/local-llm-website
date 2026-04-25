@@ -237,62 +237,6 @@ if (costForm) {
   calculateCost();
 }
 
-const advisorForm = document.getElementById('advisorForm');
-if (advisorForm) {
-  const advise = () => {
-    const data = new FormData(advisorForm);
-    const purpose = data.get('purpose');
-    const concurrency = getFormNumber(advisorForm, 'concurrency', 5);
-    const hardware = data.get('hardware');
-    const experience = data.get('experience');
-    const priority = data.get('priority');
-    let title = 'Ollama';
-    let score = '简单优先';
-    let body = '适合个人本地聊天、模型尝鲜和小规模开发验证。安装简单，但不适合严肃高并发 API 服务。';
-    let next = '先用 Ollama 跑通模型，再根据真实调用量决定是否迁移到 vLLM。';
-
-    if (purpose === 'prod' || concurrency >= 30 || priority === 'performance') {
-      title = 'vLLM';
-      score = '吞吐优先';
-      body = '适合 OpenAI-compatible API、高并发、连续批处理和多卡服务。需要更认真地处理显存、监控、限流和日志。';
-      next = '从单模型 API 服务开始压测，确认 max-model-len、并发和 gpu-memory-utilization。';
-    } else if (purpose === 'team' && (hardware === 'multi' || experience !== 'beginner')) {
-      title = 'GPUStack';
-      score = '团队管理优先';
-      body = '适合团队内部统一管理 GPU、模型和服务实例。比手写命令更适合多人协作和资源调度。';
-      next = '先把常用模型接入 GPUStack，再给团队提供统一访问入口。';
-    } else if (hardware === 'none' && priority !== 'privacy') {
-      title = '云端 API';
-      score = '上线速度优先';
-      body = '没有 GPU 或调用量不稳定时，API 通常更省心。缺点是长期高调用量可能更贵，数据也会出站。';
-      next = '先用 API 验证业务价值，再用成本计算器判断是否值得自建。';
-    } else if (hardware === 'mac' || purpose === 'dev') {
-      title = 'Ollama / LM Studio';
-      score = '开发体验优先';
-      body = '适合 Mac、本地原型和低并发测试。部署门槛低，方便快速比较模型效果。';
-      next = '先确认模型效果和 prompt，再迁移到服务器部署。';
-    }
-
-    if (priority === 'privacy' && hardware !== 'none') {
-      next += ' 你选择了隐私优先，建议避免把敏感数据发到外部 API。';
-    }
-    if (priority === 'cost' && concurrency >= 10) {
-      next += ' 调用量稳定时，自建更值得继续评估。';
-    }
-
-    document.getElementById('advisorResult').innerHTML = `
-      <article class="advisor-card">
-        <span class="advisor-score">${score}</span>
-        <h3>${title}</h3>
-        <p>${body}</p>
-        <p>${next}</p>
-      </article>
-    `;
-  };
-  advisorForm.addEventListener('submit', (e) => { e.preventDefault(); advise(); });
-  advise();
-}
-
 document.querySelectorAll('.copy-btn[data-copy-target]').forEach(btn => {
   btn.addEventListener('click', async () => {
     const target = document.getElementById(btn.dataset.copyTarget);
