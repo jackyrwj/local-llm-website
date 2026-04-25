@@ -161,43 +161,6 @@ function renderMetrics(target, metrics) {
   )).join('');
 }
 
-const costForm = document.getElementById('costForm');
-if (costForm) {
-  const calculateCost = () => {
-    const hardwareCost = getFormNumber(costForm, 'hardwareCost', 35000);
-    const months = getFormNumber(costForm, 'months', 24);
-    const powerW = getFormNumber(costForm, 'powerW', 900);
-    const hoursPerDay = getFormNumber(costForm, 'hoursPerDay', 12);
-    const electricity = getFormNumber(costForm, 'electricity', .8);
-    const opsCost = getFormNumber(costForm, 'opsCost', 300);
-    const requests = getFormNumber(costForm, 'requests', 300000);
-    const tokensPerReq = getFormNumber(costForm, 'tokensPerReq', 2000);
-    const apiPrice = getFormNumber(costForm, 'apiPrice', 8);
-    const depreciation = hardwareCost / months;
-    const powerCost = powerW / 1000 * hoursPerDay * 30 * electricity;
-    const localMonthly = depreciation + powerCost + opsCost;
-    const millionTokens = requests * tokensPerReq / 1_000_000;
-    const apiMonthly = millionTokens * apiPrice;
-    const diff = apiMonthly - localMonthly;
-    const payback = diff > 0 ? hardwareCost / diff : Infinity;
-
-    renderMetrics(document.getElementById('costResult'), [
-      ['本地月成本', formatMoney(localMonthly)],
-      ['云 API 月成本', formatMoney(apiMonthly)],
-      ['每月差额', formatMoney(Math.abs(diff)) + (diff >= 0 ? ' 本地更省' : ' API 更省')],
-      ['月 token 规模', millionTokens.toFixed(1) + 'M'],
-      ['预计回本周期', Number.isFinite(payback) ? payback.toFixed(1) + ' 个月' : '暂不回本'],
-    ]);
-
-    const advice = diff > 0
-      ? `按当前调用量，自建每月约省 ${formatMoney(diff)}，但需要承担运维、故障和模型升级成本。`
-      : `按当前调用量，云 API 每月约省 ${formatMoney(Math.abs(diff))}，先用 API 或按需租 GPU 更稳。`;
-    document.getElementById('costAdvice').textContent = advice;
-  };
-  costForm.addEventListener('submit', (e) => { e.preventDefault(); calculateCost(); });
-  calculateCost();
-}
-
 document.querySelectorAll('.copy-btn[data-copy-target]').forEach(btn => {
   btn.addEventListener('click', async () => {
     const target = document.getElementById(btn.dataset.copyTarget);

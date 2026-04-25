@@ -105,7 +105,7 @@
                         <strong>大模型显存估算器</strong>
                         <span>估算权重、KV Cache、运行开销和显存余量。</span>
                     </a>
-                    <a href="#cost-calculator" class="tool-link-card">
+                    <a href="cost-calculator.html" class="tool-link-card">
                         <strong>本地 vs API 成本计算器</strong>
                         <span>对比自建 GPU 与云端 API 的月成本和回本周期。</span>
                     </a>
@@ -117,57 +117,6 @@
                         <strong>模型部署选型助手</strong>
                         <span>根据使用场景推荐 Ollama、vLLM、GPUStack 或云 API。</span>
                     </a>
-                </div>
-            </div>
-        </section>
-
-        <section class="tool-section" id="cost-calculator">
-            <div class="container">
-                <div class="tool-shell" data-tool="cost">
-                    <div class="tool-copy">
-                        <span class="post-category cat-cmp">成本对比</span>
-                        <h2>本地模型 vs 云端 API 成本计算器</h2>
-                        <p>输入机器、用电和调用规模，快速判断自建 GPU 服务是否值得。适合团队预算和方案评审前做粗算。</p>
-                    </div>
-                    <div class="tool-grid">
-                        <form class="tool-form" id="costForm">
-                            <div class="form-grid">
-                                <label>服务器一次性投入 元
-                                    <input type="number" name="hardwareCost" min="0" step="500" value="35000">
-                                </label>
-                                <label>折旧周期 月
-                                    <input type="number" name="months" min="1" max="72" step="1" value="24">
-                                </label>
-                                <label>整机功耗 W
-                                    <input type="number" name="powerW" min="50" max="5000" step="50" value="900">
-                                </label>
-                                <label>每天运行小时
-                                    <input type="number" name="hoursPerDay" min="1" max="24" step="1" value="12">
-                                </label>
-                                <label>电费 元/kWh
-                                    <input type="number" name="electricity" min="0" max="5" step="0.01" value="0.8">
-                                </label>
-                                <label>运维及带宽 元/月
-                                    <input type="number" name="opsCost" min="0" step="50" value="300">
-                                </label>
-                                <label>每月请求数
-                                    <input type="number" name="requests" min="1" step="1000" value="300000">
-                                </label>
-                                <label>每次平均 token
-                                    <input type="number" name="tokensPerReq" min="100" step="100" value="2000">
-                                </label>
-                                <label>API 单价 元/百万 token
-                                    <input type="number" name="apiPrice" min="0" step="0.1" value="8">
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-primary">计算成本</button>
-                        </form>
-                        <div class="tool-result">
-                            <div class="result-label">成本结果</div>
-                            <div class="metric-stack" id="costResult"></div>
-                            <div class="result-note" id="costAdvice"></div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>
