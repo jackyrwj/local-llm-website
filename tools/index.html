@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI 部署工具箱：vLLM 启动命令生成器、显存估算器、本地模型成本计算器、报错诊断器和部署选型助手。">
+    <meta name="description" content="AI 部署工具箱：vLLM 启动命令生成器、显存估算器、本地模型成本计算器、部署错误知识库和部署选型助手。">
     <meta name="keywords" content="vLLM命令生成,大模型显存计算,本地模型成本,AI部署工具,Ollama,vLLM,Qwen,GPUStack">
     <meta property="og:type" content="website">
     <meta property="og:title" content="AI 部署工具箱 — vLLM、显存、成本、报错诊断">
@@ -64,10 +64,10 @@
                         AI DEPLOYMENT TOOLKIT
                     </div>
                     <h1>本地大模型部署工具箱</h1>
-                    <p>把 vLLM 命令、显存、成本、报错和选型这些反复查的问题，变成可直接操作的工具。适合部署 Qwen、Llama、DeepSeek、Ollama、GPUStack 和自建 API 服务时使用。</p>
+                    <p>把 vLLM 命令、显存、成本、错误排查和选型这些反复查的问题，变成可直接操作的工具。适合部署 Qwen、Llama、DeepSeek、Ollama、GPUStack 和自建 API 服务时使用。</p>
                     <div class="hero-actions">
                         <a href="vllm-generator.html" class="btn btn-hero-primary">开始生成命令</a>
-                        <a href="#error-diagnoser" class="btn btn-hero-outline">诊断报错</a>
+                        <a href="deployment-errors.html" class="btn btn-hero-outline">查看错误百科</a>
                     </div>
                 </div>
                 <div class="tools-hero-panel" aria-label="工具概览">
@@ -109,9 +109,9 @@
                         <strong>本地 vs API 成本计算器</strong>
                         <span>对比自建 GPU 与云端 API 的月成本和回本周期。</span>
                     </a>
-                    <a href="#error-diagnoser" class="tool-link-card">
-                        <strong>部署报错诊断器</strong>
-                        <span>粘贴 vLLM、Docker、CUDA、Cloudflare 常见报错并定位原因。</span>
+                    <a href="deployment-errors.html" class="tool-link-card">
+                        <strong>部署错误知识库</strong>
+                        <span>浏览/搜索常见部署错误，含根因分析和可执行的修复方案。</span>
                     </a>
                     <a href="#deployment-advisor" class="tool-link-card">
                         <strong>模型部署选型助手</strong>
@@ -218,30 +218,6 @@
                             <div class="result-label">成本结果</div>
                             <div class="metric-stack" id="costResult"></div>
                             <div class="result-note" id="costAdvice"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="tool-section alt" id="error-diagnoser">
-            <div class="container">
-                <div class="tool-shell" data-tool="diagnose">
-                    <div class="tool-copy">
-                        <span class="post-category cat-bug">报错诊断</span>
-                        <h2>vLLM / Docker / CUDA 报错诊断器</h2>
-                        <p>粘贴完整报错文本，工具会匹配常见故障类型，给出排查方向和下一步命令。当前覆盖显存、CUDA、Docker、端口、模型路径、Cloudflare Tunnel 等场景。</p>
-                    </div>
-                    <div class="tool-grid">
-                        <form class="tool-form" id="diagnoseForm">
-                            <label>报错文本
-                                <textarea name="errorText" rows="10" placeholder="例如：torch.cuda.OutOfMemoryError、CUDA driver version is insufficient、address already in use、502 Bad Gateway..."></textarea>
-                            </label>
-                            <button type="submit" class="btn btn-primary">诊断报错</button>
-                        </form>
-                        <div class="tool-result">
-                            <div class="result-label">诊断结果</div>
-                            <div id="diagnoseResult" class="diagnose-list"></div>
                         </div>
                     </div>
                 </div>
