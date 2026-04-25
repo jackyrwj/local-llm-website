@@ -287,6 +287,94 @@ const ERROR_ENTRIES = [
     ],
     related: ['network-port-in-use']
   },
+  {
+    id: 'python-dependency-conflict',
+    title: 'Python 依赖冲突 / 版本不兼容',
+    keywords: ['dependency', 'version conflict', 'transformers', 'torch', 'numpy', 'pydantic', 'install', 'requirement', 'no module named', 'attributeerror', 'import error'],
+    category: 'vllm',
+    tags: ['startup', 'version', 'config'],
+    severity: 'error',
+    symptoms: '导入或启动时报错 "No module named xxx"、"AttributeError"、"ImportError"，或 pip install 时提示版本冲突无法解决依赖。',
+    cause: 'vLLM、transformers、torch 等核心库的版本矩阵复杂，某一库升级后可能破坏与其他库的兼容性。常见问题包括：transformers 版本太新/太旧、torch CUDA 版本与本地不匹配、pydantic v1/v2 API 变更导致不兼容。',
+    fix: [
+      '使用虚拟环境隔离依赖（venv / conda），避免与系统 Python 混用',
+      '按 vLLM 官方文档安装指定版本的 torch 和 transformers',
+      '遇到 pydantic 冲突时，统一升级到 v2：pip install "pydantic>=2.0"',
+      '使用 pip install 时加 --no-deps 然后手动安装缺失依赖',
+      '必要时删除环境重建，按官方 requirements 重新安装'
+    ],
+    commands: [
+      { desc: '查看当前关键包版本', cmd: 'pip show torch transformers vllm pydantic' },
+      { desc: '按 vLLM 推荐版本安装', cmd: 'pip install vllm torch transformers --upgrade' }
+    ],
+    related: ['cuda-driver-mismatch', 'model-quantization-incompatible']
+  },
+  {
+    id: 'model-download-slow',
+    title: '模型下载慢或中断',
+    keywords: ['download slow', 'huggingface', 'connection timeout', 'ssl', 'connection reset', 'download interrupted', 'snapshot download', 'hf-mirror'],
+    category: 'model',
+    tags: ['startup', 'config'],
+    severity: 'warning',
+    symptoms: 'huggingface-cli download 或首次启动时下载模型极慢（几 KB/s）、频繁超时中断，或报错 SSL/连接重置。',
+    cause: '国内网络访问 HuggingFace 官方服务器不稳定，或模型文件过大（数十 GB）导致下载时间长、容易中断。也可能是本地磁盘空间不足导致写入失败。',
+    fix: [
+      '使用 HuggingFace 镜像站：export HF_ENDPOINT=https://hf-mirror.com',
+      '使用模型站（如 ModelScope）下载后转放到本地目录',
+      '使用 huggingface-cli 的 --resume-download 断点续传',
+      '预先在网速好的机器下载，通过硬盘/U盘/内网传输到目标机器',
+      '检查磁盘剩余空间是否大于模型文件 2 倍以上（下载时需要临时空间）'
+    ],
+    commands: [
+      { desc: '使用镜像站下载', cmd: 'export HF_ENDPOINT=https://hf-mirror.com\nhuggingface-cli download Qwen/Qwen3-7B-Instruct --local-dir ./models/qwen3-7b' },
+      { desc: '断点续传下载', cmd: 'huggingface-cli download Qwen/Qwen3-7B-Instruct --resume-download --local-dir ./models/qwen3-7b' }
+    ],
+    related: ['vllm-model-not-found', 'model-gated-permission']
+  },
+  {
+    id: 'nccl-multi-gpu-error',
+    title: 'NCCL 多卡通信错误',
+    keywords: ['nccl', 'multi gpu', 'tensor parallel', 'communication', 'allreduce', 'rank', 'distributed', 'timeout', 'ibv'],
+    category: 'cuda',
+    tags: ['startup', 'config', 'performance'],
+    severity: 'error',
+    symptoms: '多卡启动（--tensor-parallel-size > 1）时报错 "NCCL error"、"unhandled system error"、"connection refused by rank" 或进程卡死。',
+    cause: 'NCCL（NVIDIA Collective Communications Library）需要 GPU 之间通过 PCIe 或 NVLink 进行通信。常见原因：IB/RDMA 网络配置错误、防火墙阻止 NCCL 端口、多卡环境下 NCCL 超时、或显卡不在同一 NUMA 节点导致通信异常。',
+    fix: [
+      '确认所有 GPU 可被 nvidia-smi 正常识别',
+      '设置 NCCL 环境变量使用 TCP 而非 IB：export NCCL_IB_DISABLE=1',
+      '设置 NCCL 调试日志定位问题：export NCCL_DEBUG=INFO',
+      '检查防火墙是否阻止了 NCCL 使用的端口范围',
+      '确认多卡在同一物理机内，跨机分布式需要额外的网络配置'
+    ],
+    commands: [
+      { desc: '禁用 IB 使用纯 TCP', cmd: 'export NCCL_IB_DISABLE=1\npython -m vllm.entrypoints.openai.api_server --model Qwen/Qwen3-7B-Instruct --tensor-parallel-size 2' },
+      { desc: '开启 NCCL 调试日志', cmd: 'export NCCL_DEBUG=INFO\npython -m vllm.entrypoints.openai.api_server --model Qwen/Qwen3-7B-Instruct --tensor-parallel-size 2 2>&1 | grep NCCL' }
+    ],
+    related: ['cuda-no-device', 'cuda-oom']
+  },
+  {
+    id: 'file-permission-denied',
+    title: '文件/目录权限不足',
+    keywords: ['permission denied', 'access denied', 'readonly', 'write permission', 'mkdir', 'cache', 'huggingface hub'],
+    category: 'model',
+    tags: ['startup', 'permission', 'config'],
+    severity: 'warning',
+    symptoms: '启动时报错 "Permission denied"、"Read-only file system"，或模型下载到一半报错无法写入，无法创建缓存目录。',
+    cause: '当前用户没有模型目录或 HuggingFace 缓存目录的写入权限；磁盘以只读方式挂载；或使用了 sudo 下载模型后普通用户无法读取。也可能是 Docker 容器内用户 UID 与宿主机不一致导致权限问题。',
+    fix: [
+      '检查并修改目录权限：chmod -R u+rw /path/to/models',
+      '确认磁盘未以只读挂载：mount | grep 对应分区',
+      '设置 HuggingFace 缓存目录到用户有权限的位置：export HF_HOME=/home/$(whoami)/.cache/huggingface',
+      '避免混用 root 和普通用户下载模型',
+      'Docker 运行时添加 --user $(id -u):$(id -g) 或使用相同 UID 的镜像用户'
+    ],
+    commands: [
+      { desc: '修复模型目录权限', cmd: 'chmod -R u+rw ./models\nchown -R $(whoami):$(whoami) ./models' },
+      { desc: '设置自定义缓存目录', cmd: 'export HF_HOME=$HOME/.cache/huggingface\nexport TRANSFORMERS_CACHE=$HOME/.cache/huggingface' }
+    ],
+    related: ['vllm-model-not-found', 'docker-gpu-mount']
+  },
 ];
 
 // ── State ────────────────────────────────────
