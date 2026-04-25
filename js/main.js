@@ -161,45 +161,6 @@ function renderMetrics(target, metrics) {
   )).join('');
 }
 
-const memoryForm = document.getElementById('memoryForm');
-if (memoryForm) {
-  const calculateMemory = () => {
-    const paramsB = getFormNumber(memoryForm, 'paramsB', 7);
-    const bytesPerParam = getFormNumber(memoryForm, 'precision', 2);
-    const contextLen = getFormNumber(memoryForm, 'contextLen', 8192);
-    const concurrency = getFormNumber(memoryForm, 'concurrency', 4);
-    const hiddenSize = getFormNumber(memoryForm, 'hiddenSize', 4096);
-    const layers = getFormNumber(memoryForm, 'layers', 32);
-    const gpuCount = getFormNumber(memoryForm, 'gpuCount', 1);
-    const gpuMemory = getFormNumber(memoryForm, 'gpuMemory', 24);
-    const weightGb = paramsB * bytesPerParam;
-    const kvCacheGb = contextLen * concurrency * hiddenSize * layers * 2 * 2 / 1024 ** 3;
-    const runtimeGb = Math.max(2, weightGb * 0.12);
-    const totalGb = weightGb + kvCacheGb + runtimeGb;
-    const availableGb = gpuCount * gpuMemory * 0.9;
-    const perGpuGb = totalGb / gpuCount;
-    const headroomGb = availableGb - totalGb;
-
-    renderMetrics(document.getElementById('memoryResult'), [
-      ['模型权重估算', formatGb(weightGb)],
-      ['KV Cache 估算', formatGb(kvCacheGb)],
-      ['运行时预留', formatGb(runtimeGb)],
-      ['总显存需求', formatGb(totalGb)],
-      ['每卡平均压力', formatGb(perGpuGb)],
-      ['可用显存余量', formatGb(headroomGb)],
-    ]);
-
-    const advice = [];
-    if (headroomGb < 0) advice.push('当前配置大概率会 OOM，优先降低上下文长度、并发数或使用 4bit 量化。');
-    else if (headroomGb < availableGb * .15) advice.push('显存余量较少，建议预留更多空间给峰值请求和 CUDA 上下文。');
-    else advice.push('显存余量看起来健康，可以进入启动测试和并发压测。');
-    if (concurrency * contextLen > 65536) advice.push('并发和上下文乘积较大，KV Cache 会成为主要显存来源。');
-    document.getElementById('memoryAdvice').textContent = advice.join(' ');
-  };
-  memoryForm.addEventListener('submit', (e) => { e.preventDefault(); calculateMemory(); });
-  calculateMemory();
-}
-
 const costForm = document.getElementById('costForm');
 if (costForm) {
   const calculateCost = () => {

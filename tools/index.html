@@ -101,7 +101,7 @@
                         <strong>vLLM 启动命令生成器</strong>
                         <span>按模型、显卡、上下文和量化方式生成可复制命令。</span>
                     </a>
-                    <a href="#memory-calculator" class="tool-link-card">
+                    <a href="memory-calculator.html" class="tool-link-card">
                         <strong>大模型显存估算器</strong>
                         <span>估算权重、KV Cache、运行开销和显存余量。</span>
                     </a>
@@ -117,58 +117,6 @@
                         <strong>模型部署选型助手</strong>
                         <span>根据使用场景推荐 Ollama、vLLM、GPUStack 或云 API。</span>
                     </a>
-                </div>
-            </div>
-        </section>
-
-        <section class="tool-section alt" id="memory-calculator">
-            <div class="container">
-                <div class="tool-shell" data-tool="memory">
-                    <div class="tool-copy">
-                        <span class="post-category cat-bug">显存估算</span>
-                        <h2>大模型显存估算器</h2>
-                        <p>估算模型权重、KV Cache 和运行时开销。结果适合做部署前判断，不替代真实压测。</p>
-                    </div>
-                    <div class="tool-grid">
-                        <form class="tool-form" id="memoryForm">
-                            <div class="form-grid">
-                                <label>模型参数量 B
-                                    <input type="number" name="paramsB" min="0.5" max="500" step="0.5" value="7">
-                                </label>
-                                <label>精度 / 量化
-                                    <select name="precision">
-                                        <option value="2">FP16 / BF16</option>
-                                        <option value="1">INT8</option>
-                                        <option value="0.5">INT4 / AWQ / GPTQ</option>
-                                    </select>
-                                </label>
-                                <label>上下文长度
-                                    <input type="number" name="contextLen" min="512" max="200000" step="512" value="8192">
-                                </label>
-                                <label>并发请求数
-                                    <input type="number" name="concurrency" min="1" max="512" step="1" value="4">
-                                </label>
-                                <label>隐藏层大小
-                                    <input type="number" name="hiddenSize" min="512" max="32768" step="128" value="4096">
-                                </label>
-                                <label>层数
-                                    <input type="number" name="layers" min="1" max="160" step="1" value="32">
-                                </label>
-                                <label>GPU 数量
-                                    <input type="number" name="gpuCount" min="1" max="16" step="1" value="1">
-                                </label>
-                                <label>每张 GPU 显存 GB
-                                    <input type="number" name="gpuMemory" min="4" max="192" step="1" value="24">
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-primary">估算显存</button>
-                        </form>
-                        <div class="tool-result">
-                            <div class="result-label">显存结果</div>
-                            <div class="metric-stack" id="memoryResult"></div>
-                            <div class="result-note" id="memoryAdvice"></div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>
