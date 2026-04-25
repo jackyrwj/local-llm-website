@@ -1,25 +1,26 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI 部署手记 — 本地大模型部署工具箱：vLLM 命令生成器、显存估算器、成本计算器、常见部署错误修复和部署选型助手。">
-    <meta name="keywords" content="本地大模型,vLLM,GPUStack,Qwen,AI部署,私有化部署,本地AI,显存估算">
+    <meta name="description" content="AI Deployment Notes — Local LLM Deployment Toolkit: vLLM Command Generator, VRAM Estimator, Cost Calculator, Common Deployment Error Fixes, and Deployment Advisor.">
+    <meta name="keywords" content="local LLM,vLLM,GPUStack,Qwen,AI deployment,private deployment,local AI,VRAM estimation">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="AI 部署手记 — 本地大模型部署工具箱">
-    <meta property="og:description" content="从选型到上线，5 个工具帮你搞定 vLLM、GPUStack、Qwen 本地部署。显存估算、命令生成、成本对比、常见部署错误修复一站式解决。">
-    <meta property="og:locale" content="zh_CN">
+    <meta property="og:title" content="AI Deployment Notes — Local LLM Deployment Toolkit">
+    <meta property="og:description" content="From selection to production, 5 tools to help you deploy vLLM, GPUStack, and Qwen locally. VRAM estimation, command generation, cost comparison, and common deployment error fixes—all in one place.">
+    <meta property="og:locale" content="en_US">
     <meta name="twitter:card" content="summary_large_image">
-    <title>AI 部署手记 — 本地大模型部署工具箱</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>AI Deployment Notes — Local LLM Deployment Toolkit</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="canonical" href="https://yourdomain.com/">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "AI 部署手记",
-      "description": "本地大模型部署实战经验分享与工具箱，涵盖 vLLM、GPUStack、Qwen 等工具的真实踩坑记录",
-      "inLanguage": "zh-CN",
+      "name": "AI Deployment Notes",
+      "description": "Practical local LLM deployment experience and toolkit, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more",
+      "inLanguage": "en",
       "url": "https://yourdomain.com/"
     }
     </script>
@@ -29,7 +30,7 @@
     <header class="site-header">
         <div class="container">
             <div class="logo">
-                <a href="index.html">
+                <a href="/index.html">
                     <span class="logo-mark" aria-hidden="true">
                         <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect x="2" y="2" width="6" height="6" rx="1" fill="white"/>
@@ -38,139 +39,155 @@
                             <rect x="10" y="10" width="6" height="6" rx="1" fill="white"/>
                         </svg>
                     </span>
-                    AI 部署手记
+                    AI Deployment Notes
                 </a>
             </div>
-            <nav class="main-nav" aria-label="主导航">
-                <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
                     <span></span>
                     <span></span>
                     <span></span>
                 </button>
                 <ul class="nav-menu">
-                    <li><a href="index.html" class="active">首页</a></li>
-                    <li><a href="tools/index.html">工具箱</a></li>
-                    <li><a href="posts/index.html">文章</a></li>
-                    <li><a href="about.html">关于</a></li>
-                    <li><a href="faq.html">FAQ</a></li>
-                    <li><a href="contact.html">联系</a></li>
+                    <li><a href="/index.html" class="active">Home</a></li>                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Articles</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
                 </ul>
-                <a href="tools/index.html" class="nav-cta">打开工具箱</a>
+                <a href="/tools/index.html" class="nav-cta">Open Toolkit</a>
+                <a href="/zh/index.html" class="lang-switch">中文</a>
             </nav>
         </div>
     </header>
 
     <main>
-        <!-- Hero: 简化版，文案居中 -->
+        <!-- Hero: simplified, centered copy -->
         <section class="hero hero-simple">
             <div class="container">
                 <div class="hero-content">
                     <div class="hero-eyebrow">
                         <span class="dot"></span>
-                        本地大模型部署第一站
+                        Your First Stop for Local LLM Deployment
                     </div>
-                    <h1>本地大模型<br><span class="accent-line">部署工具箱</span></h1>
-                    <p class="hero-subtitle">从选型到上线，5 个工具帮你搞定 vLLM、GPUStack、Qwen 部署。全部在浏览器本地运行，无需注册。</p>
+                    <h1>Local LLM<br><span class="accent-line">Deployment Toolkit</span></h1>
+                    <p class="hero-subtitle">From selection to production, 5 tools to help you deploy vLLM, GPUStack, and Qwen. Everything runs locally in your browser—no signup required.</p>
                     <div class="hero-actions">
-                        <a href="#tools" class="btn btn-hero-primary">开始使用</a>
-                        <a href="posts/index.html" class="btn btn-hero-outline">查看教程</a>
+                        <a href="#tools" class="btn btn-hero-primary">Get Started</a>
+                        <a href="/posts/index.html" class="btn btn-hero-outline">View Tutorials</a>
                     </div>
                     <div class="hero-stats">
                         <div>
                             <span class="hero-stat-num">5</span>
-                            <span class="hero-stat-label">核心工具</span>
+                            <span class="hero-stat-label">Core Tools</span>
                         </div>
                         <div>
                             <span class="hero-stat-num">20+</span>
-                            <span class="hero-stat-label">实战文章</span>
+                            <span class="hero-stat-label">Articles</span>
                         </div>
                         <div>
-                            <span class="hero-stat-num">本地</span>
-                            <span class="hero-stat-label">浏览器计算</span>
+                            <span class="hero-stat-num">Local</span>
+                            <span class="hero-stat-label">Browser-based</span>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 阶段筛选 + 工具网格 -->
+        <!-- Stage filter + tools grid -->
         <section class="homepage-tools" id="tools">
             <div class="container">
                 <div class="section-heading">
                     <div class="section-heading-text">
-                        <div class="section-label">部署工具</div>
-                        <h2>按部署阶段选择工具</h2>
+                        <div class="section-label">Deployment Tools</div>
+                        <h2>Choose by Deployment Stage</h2>
                     </div>
                     <div class="section-heading-line"></div>
                 </div>
 
                 <div class="stage-filter">
-                    <button class="stage-filter-btn active" data-filter="all">全部工具</button>
-                    <button class="stage-filter-btn" data-filter="prep">准备阶段</button>
-                    <button class="stage-filter-btn" data-filter="start">启动阶段</button>
-                    <button class="stage-filter-btn" data-filter="run">运行阶段</button>
+                    <button class="stage-filter-btn active" data-filter="all">All Tools</button>
+                    <button class="stage-filter-btn" data-filter="prep">Preparation</button>
+                    <button class="stage-filter-btn" data-filter="start">Startup</button>
+                    <button class="stage-filter-btn" data-filter="run">Runtime</button>
                 </div>
 
                 <div class="tools-grid-row row-1">
-                    <a href="tools/memory-calculator.html" class="homepage-tool-card" data-stage="prep">
-                        <span class="stage-badge prep">准备</span>
+                    <a href="/tools/memory-calculator.html" class="homepage-tool-card" data-stage="prep">
+                        <span class="stage-badge prep">Prep</span>
                         <div class="tool-icon">🧮</div>
-                        <h3>显存估算器</h3>
-                        <p>输入模型参数与精度，快速估算 GPU 显存是否够用，避免部署时 OOM。</p>
-                        <div class="tool-meta">💡 最常用</div>
+                        <h3>VRAM Estimator</h3>
+                        <p>Enter model parameters and precision to quickly estimate if your GPU VRAM is sufficient and avoid OOM errors during deployment.</p>
+                        <div class="tool-meta">💡 Most Popular</div>
                     </a>
 
-                    <a href="tools/cost-calculator.html" class="homepage-tool-card" data-stage="prep">
-                        <span class="stage-badge prep">准备</span>
+                    <a href="/tools/cost-calculator.html" class="homepage-tool-card" data-stage="prep">
+                        <span class="stage-badge prep">Prep</span>
                         <div class="tool-icon">💰</div>
-                        <h3>成本计算器</h3>
-                        <p>对比自建 GPU 服务器与调用云 API 的月成本，帮你算清回本周期。</p>
-                        <div class="tool-meta">📊 省钱利器</div>
+                        <h3>Cost Calculator</h3>
+                        <p>Compare monthly costs between self-hosted GPU servers and cloud API calls to calculate your payback period.</p>
+                        <div class="tool-meta">📊 Money Saver</div>
                     </a>
 
-                    <a href="tools/vllm-generator.html" class="homepage-tool-card" data-stage="start">
-                        <span class="stage-badge start">启动</span>
+                    <a href="/tools/vllm-generator.html" class="homepage-tool-card" data-stage="start">
+                        <span class="stage-badge start">Start</span>
                         <div class="tool-icon">⚡</div>
-                        <h3>vLLM 命令生成器</h3>
-                        <p>按模型、显卡、上下文和量化方式，一键生成可复制的 vLLM 启动命令。</p>
-                        <div class="tool-meta">⚡ 一键生成</div>
+                        <h3>vLLM Command Generator</h3>
+                        <p>Generate copy-paste ready vLLM startup commands based on your model, GPU, context length, and quantization settings.</p>
+                        <div class="tool-meta">⚡ One-Click Gen</div>
                     </a>
                 </div>
 
                 <div class="tools-grid-row row-2">
-                    <a href="tools/deployment-errors.html" class="homepage-tool-card" data-stage="start">
-                        <span class="stage-badge start">启动</span>
+                    <a href="/tools/deployment-errors.html" class="homepage-tool-card" data-stage="start">
+                        <span class="stage-badge start">Start</span>
                         <div class="tool-icon">📚</div>
-                        <h3>常见部署错误及修复</h3>
-                        <p>浏览常见部署错误、根因与可执行的修复步骤，按分类或关键词快速定位。</p>
-                        <div class="tool-meta">📚 救急必备</div>
+                        <h3>Common Deployment Errors &amp; Fixes</h3>
+                        <p>Browse common deployment errors, root causes, and actionable fixes. Filter by category or search by keyword.</p>
+                        <div class="tool-meta">📚 Emergency Kit</div>
                     </a>
 
-                    <a href="tools/deployment-advisor.html" class="homepage-tool-card" data-stage="run">
-                        <span class="stage-badge run">运行</span>
+                    <a href="/tools/deployment-advisor.html" class="homepage-tool-card" data-stage="run">
+                        <span class="stage-badge run">Run</span>
                         <div class="tool-icon">🎯</div>
-                        <h3>部署选型助手</h3>
-                        <p>根据使用场景、硬件条件和并发需求，推荐 Ollama、vLLM 或云 API 方案。</p>
-                        <div class="tool-meta">🎯 选型指南</div>
+                        <h3>Deployment Advisor</h3>
+                        <p>Get recommendations for Ollama, vLLM, or cloud API solutions based on your use case, hardware, and concurrency needs.</p>
+                        <div class="tool-meta">🎯 Selection Guide</div>
                     </a>
                 </div>
             </div>
         </section>
 
-        <!-- AdSense 广告位 -->
+        <!-- AdSense ad slot -->
         <section class="adsense-slot">
             <div class="adsense-placeholder">
-                AdSense 广告位（内容流中间）— 部署完成后替换为真实广告代码
+                AdSense ad slot (mid-content) — replace with real ad code after deployment
             </div>
         </section>
 
-        <!-- 最新文章 -->
+        <!-- Latest articles -->
         <section class="latest-articles-home">
             <div class="container">
                 <div class="section-heading">
                     <div class="section-heading-text">
-                        <div class="section-label">实战文章</div>
-                        <h2>最新部署记录</h2>
+                        <div class="section-label">Articles</div>
+                        <h2>Latest Deployment Notes</h2>
                     </div>
                     <div class="section-heading-line"></div>
                 </div>
@@ -178,75 +195,75 @@
                 <div class="post-grid">
                     <article class="post-card">
                         <div class="post-image">
-                            <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop" alt="vLLM 部署教程" loading="lazy">
+                            <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&amp;h=400&amp;fit=crop" alt="vLLM deployment tutorial" loading="lazy">
                         </div>
                         <div class="post-content">
-                            <span class="post-category cat-tut">教程</span>
-                            <h3><a href="posts/vllm-deploy-llm-step-by-step.html">vLLM + Qwen3 完整部署指南：从零到 API 服务</a></h3>
-                            <p>一步步教你安装 vLLM、下载模型、配置参数、启动服务，并用 GPUStack 管理多模型。</p>
+                            <span class="post-category cat-tut">Tutorial</span>
+                            <h3><a href="/posts/vllm-deploy-llm-step-by-step.html">vLLM + Qwen3 Complete Deployment Guide: From Zero to API Service</a></h3>
+                            <p>A step-by-step guide to installing vLLM, downloading models, configuring parameters, launching services, and managing multiple models with GPUStack.</p>
                             <div class="post-meta">
-                                <time datetime="2026-04-23">2026年04月23日</time>
-                                <span class="read-time">12 分钟阅读</span>
+                                <time datetime="2026-04-23">April 23, 2026</time>
+                                <span class="read-time">12 min read</span>
                             </div>
                         </div>
                     </article>
 
                     <article class="post-card">
                         <div class="post-image">
-                            <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?w=600&h=400&fit=crop" alt="成本对比" loading="lazy">
+                            <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?w=600&amp;h=400&amp;fit=crop" alt="Cost comparison" loading="lazy">
                         </div>
                         <div class="post-content">
-                            <span class="post-category cat-cmp">对比</span>
-                            <h3><a href="posts/local-vs-cloud-model.html">本地模型 vs 云端模型：成本、性能、体验全面对比</a></h3>
-                            <p>基于 6 个月实测数据，从每千 token 成本、响应延迟、隐私控制等维度给出选型建议。</p>
+                            <span class="post-category cat-cmp">Comparison</span>
+                            <h3><a href="/posts/local-vs-cloud-model.html">Local vs Cloud Models: A Full Cost, Performance, and Experience Comparison</a></h3>
+                            <p>Based on 6 months of real-world data, we compare per-1K-token costs, response latency, and privacy controls to help you choose.</p>
                             <div class="post-meta">
-                                <time datetime="2026-04-23">2026年04月23日</time>
-                                <span class="read-time">8 分钟阅读</span>
+                                <time datetime="2026-04-23">April 23, 2026</time>
+                                <span class="read-time">8 min read</span>
                             </div>
                         </div>
                     </article>
 
                     <article class="post-card">
                         <div class="post-image">
-                            <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=400&fit=crop" alt="报错修复" loading="lazy">
+                            <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&amp;h=400&amp;fit=crop" alt="Error fix" loading="lazy">
                         </div>
                         <div class="post-content">
-                            <span class="post-category cat-bug">踩坑</span>
-                            <h3><a href="posts/qwen-context-overflow-fix.html">Qwen 上下文爆满问题解决方案</a></h3>
-                            <p>vLLM 部署 Qwen 时 context overflow 导致 API 500 的排查过程与三步修复方案。</p>
+                            <span class="post-category cat-bug">Troubleshooting</span>
+                            <h3><a href="/posts/qwen-context-overflow-fix.html">Fixing Qwen Context Overflow Issues</a></h3>
+                            <p>A deep dive into diagnosing and fixing vLLM context overflow errors when deploying Qwen, with a three-step recovery plan.</p>
                             <div class="post-meta">
-                                <time datetime="2026-04-23">2026年04月23日</time>
-                                <span class="read-time">6 分钟阅读</span>
+                                <time datetime="2026-04-23">April 23, 2026</time>
+                                <span class="read-time">6 min read</span>
                             </div>
                         </div>
                     </article>
                 </div>
 
                 <div class="text-center" style="margin-top: 2.5rem;">
-                    <a href="posts/index.html" class="btn btn-secondary">查看全部文章</a>
+                    <a href="/posts/index.html" class="btn btn-secondary">View All Articles</a>
                 </div>
             </div>
         </section>
 
-        <!-- 信任背书 -->
+        <!-- Trust bar -->
         <section class="trust-bar">
             <div class="container">
                 <div class="trust-grid">
                     <div class="trust-item">
                         <span class="num">5</span>
-                        <span class="label">核心工具</span>
+                        <span class="label">Core Tools</span>
                     </div>
                     <div class="trust-item">
                         <span class="num">20+</span>
-                        <span class="label">实战文章</span>
+                        <span class="label">Articles</span>
                     </div>
                     <div class="trust-item">
                         <span class="num">0</span>
-                        <span class="label">后端依赖</span>
+                        <span class="label">Backend Dependencies</span>
                     </div>
                     <div class="trust-item">
-                        <span class="num">本地</span>
-                        <span class="label">浏览器计算</span>
+                        <span class="num">Local</span>
+                        <span class="label">Browser-based</span>
                     </div>
                 </div>
             </div>
@@ -257,35 +274,35 @@
             <div class="container">
                 <div class="section-heading">
                     <div class="section-heading-text">
-                        <div class="section-label">常见问题</div>
-                        <h2>快速解答</h2>
+                        <div class="section-label">FAQ</div>
+                        <h2>Quick Answers</h2>
                     </div>
                     <div class="section-heading-line"></div>
                 </div>
                 <div class="faq-list">
                     <details class="faq-item">
-                        <summary>本地部署大模型需要什么显卡？</summary>
-                        <p>最低门槛是 8GB 显存的显卡（如 RTX 3060 Ti），可以跑 7B 参数的量化模型（AWQ/GPTQ 4bit）。如果想流畅运行 13B 模型或同时加载多个模型，建议 24GB 显存（RTX 3090/4090）。我目前的主力环境是双卡 RTX 4090，可以并行跑 Qwen3-7B + Qwen3-Coder-7B。</p>
+                        <summary>What GPU do I need to deploy local LLMs?</summary>
+                        <p>The minimum requirement is an 8GB VRAM GPU (e.g., RTX 3060 Ti), which can run 7B parameter quantized models (AWQ/GPTQ 4-bit). For smooth 13B model operation or running multiple models simultaneously, 24GB VRAM (RTX 3090/4090) is recommended. My current setup uses dual RTX 4090s, which can run Qwen3-7B and Qwen3-Coder-7B in parallel.</p>
                     </details>
                     <details class="faq-item">
-                        <summary>vLLM 和 Ollama 有什么区别？</summary>
-                        <p>vLLM 是生产级推理引擎，支持高并发、连续批处理、PagedAttention，适合 API 服务场景。Ollama 是开发者体验优先的本地沙盒，安装简单、命令直观，适合个人实验。一句话：要跑服务选 vLLM，要快速尝鲜选 Ollama。更详细的对比可以看<a href="posts/vllm-vs-ollama-comparison.html">这篇深度对比</a>。</p>
+                        <summary>What's the difference between vLLM and Ollama?</summary>
+                        <p>vLLM is a production-grade inference engine with high concurrency, continuous batching, and PagedAttention—ideal for API service scenarios. Ollama prioritizes developer experience with simple installation and intuitive commands, perfect for personal experimentation. In short: choose vLLM for services, Ollama for quick trials. For a detailed comparison, see <a href="/posts/vllm-vs-ollama-comparison.html">this in-depth comparison</a>.</p>
                     </details>
                     <details class="faq-item">
-                        <summary>显存不足怎么办？</summary>
-                        <p>五个降显存手段：① 用 AWQ/GPTQ 4bit 量化模型（省 50-60% 显存）；② 减小 max-model-len（如从 8192 降到 4096）；③ 开启 FlashAttention-2（省 10-15%）；④ 降低 gpu-memory-utilization（如从 0.9 降到 0.8）；⑤ 用多卡张量并行（tensor-parallel-size）。详细步骤参考<a href="posts/gpu-oom-optimization.html">GPU 显存优化实战</a>。</p>
+                        <summary>What if I run out of VRAM?</summary>
+                        <p>Five ways to reduce VRAM usage: ① Use AWQ/GPTQ 4-bit quantized models (saves 50-60% VRAM); ② Reduce max-model-len (e.g., from 8192 to 4096); ③ Enable FlashAttention-2 (saves 10-15%); ④ Lower gpu-memory-utilization (e.g., from 0.9 to 0.8); ⑤ Use multi-GPU tensor parallelism (tensor-parallel-size). For detailed steps, see <a href="/posts/gpu-oom-optimization.html">GPU VRAM Optimization Guide</a>.</p>
                     </details>
                     <details class="faq-item">
-                        <summary>没有公网 IP 怎么让外网访问本地模型？</summary>
-                        <p>推荐 Cloudflare Tunnel（免费、安全、带 HTTPS）。不需要公网 IP、不改路由器、不暴露端口。我写了一篇完整教程<a href="posts/cloudflare-tunnel-local-ai.html">在这里</a>。替代方案包括 frp、ngrok、花生壳等，但 Cloudflare Tunnel 在稳定性和安全性上更优。</p>
+                        <summary>How can I access my local model from the internet without a public IP?</summary>
+                        <p>We recommend Cloudflare Tunnel (free, secure, with HTTPS). No public IP needed, no router changes, no port exposure. I wrote a complete tutorial <a href="/posts/cloudflare-tunnel-local-ai.html">here</a>. Alternatives include frp, ngrok, and Peanut Shell, but Cloudflare Tunnel wins on stability and security.</p>
                     </details>
                     <details class="faq-item">
-                        <summary>自建本地模型比买 API 便宜吗？</summary>
-                        <p>取决于使用量。我算过一笔账：自建双卡 RTX 4090 服务器一次性投入约 3.5 万，但按每天 5000 次请求算，比调用 OpenAI API 每月省 2000-3000 元，一年回本。如果每月请求少于 10 万次，买 API 更划算。详细对比看<a href="posts/local-vs-cloud-model.html">本地 vs 云端全面对比</a>。</p>
+                        <summary>Is self-hosting cheaper than buying API access?</summary>
+                        <p>It depends on usage. My calculation: a dual RTX 4090 server costs about 35,000 upfront, but at 5,000 requests/day, it saves 2,000-3,000 per month compared to OpenAI API—payback in one year. If you make fewer than 100K requests/month, API is more cost-effective. See the full comparison at <a href="/posts/local-vs-cloud-model.html">Local vs Cloud: Full Comparison</a>.</p>
                     </details>
                 </div>
                 <div class="faq-more">
-                    <a href="faq.html" class="btn btn-secondary">查看全部常见问题</a>
+                    <a href="/faq.html" class="btn btn-secondary">View All FAQs</a>
                 </div>
             </div>
         </section>
@@ -293,12 +310,12 @@
         <!-- Newsletter -->
         <section class="newsletter">
             <div class="container">
-                <div class="section-label">保持同步</div>
-                <h2>订阅更新通知</h2>
-                <p>新文章发布时第一时间收到通知，不发广告，只发文章。</p>
+                <div class="section-label">Stay in Sync</div>
+                <h2>Subscribe for Updates</h2>
+                <p>Get notified when new articles are published. No ads, just articles.</p>
                 <form class="newsletter-form" action="#" method="post">
-                    <input type="email" placeholder="输入你的邮箱地址" required aria-label="邮箱地址">
-                    <button type="submit" class="btn">立即订阅</button>
+                    <input type="email" placeholder="Enter your email address" required aria-label="Email address">
+                    <button type="submit" class="btn">Subscribe Now</button>
                 </form>
             </div>
         </section>
@@ -317,45 +334,45 @@
                                 <rect x="9" y="9" width="6" height="6" rx="1" fill="white"/>
                             </svg>
                         </span>
-                        AI 部署手记
+                        AI Deployment Notes
                     </div>
-                    <p>本地大模型部署实战经验分享，涵盖 vLLM、GPUStack、Qwen 等工具的真实踩坑记录与解决方案。</p>
-                    <span class="footer-tagline">实战记录 · 避坑指南 · 每日更新</span>
+                    <p>Practical local LLM deployment experience, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Hands-on Notes · Pitfall Guides · Daily Updates</span>
                 </div>
                 <div class="footer-links">
-                    <h4>快速链接</h4>
+                    <h4>Quick Links</h4>
                     <ul>
-                        <li><a href="index.html">首页</a></li>
-                        <li><a href="tools/index.html">工具箱</a></li>
-                        <li><a href="posts/index.html">文章归档</a></li>
-                        <li><a href="about.html">关于</a></li>
-                        <li><a href="faq.html">FAQ</a></li>
-                        <li><a href="contact.html">联系</a></li>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Article Archive</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
                     </ul>
                 </div>
                 <div class="footer-legal">
-                    <h4>法律信息</h4>
+                    <h4>Legal</h4>
                     <ul>
-                        <li><a href="privacy-policy.html">隐私政策</a></li>
-                        <li><a href="terms-of-service.html">使用条款</a></li>
-                        <li><a href="cookie-policy.html">Cookie 政策</a></li>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 AI 部署手记. 保留所有权利。</p>
-                <p>本地 AI 实战记录</p>
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Deployment Notes</p>
             </div>
         </div>
     </footer>
 
     <div class="cookie-consent" id="cookieConsent">
         <div class="container">
-            <p>本站使用 Cookie 分析访问数据。继续浏览即表示你同意我们的 <a href="cookie-policy.html">Cookie 政策</a> 和 <a href="privacy-policy.html">隐私政策</a>。</p>
-            <button class="btn btn-primary" id="acceptCookies">我知道了</button>
+            <p>This site uses cookies to analyze traffic. By continuing to browse, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
         </div>
     </div>
 
-    <script src="js/main.js"></script>
+    <script src="/js/main.js"></script>
 </body>
 </html>

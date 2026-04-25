@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="大模型显存估算器 — 根据模型参数、量化方式、上下文长度和并发数，精确估算 GPU 显存需求。支持模型预设、GPU 预设和显存不足时的优化建议。">
+    <meta property="og:title" content="大模型显存估算器 — AI 部署手记">
+    <meta property="og:description" content="大模型显存估算器 — 根据模型参数、量化方式、上下文长度和并发数，精确估算 GPU 显存需求。支持模型预设、GPU 预设和显存不足时的优化建议。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourdomain.com/zh/tools/memory-calculator.html">
+    <meta property="og:locale" content="zh_CN">
+    <meta name="keywords" content="大模型显存计算,GPU显存估算,vLLM显存,KV Cache计算,OOM预估">
+    <title>大模型显存估算器 — AI 部署手记</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://yourdomain.com/zh/tools/memory-calculator.html">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo">
+                <a href="/zh/index.html">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="6" height="6" rx="1" fill="white"/>
+                            <rect x="10" y="2" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="2" y="10" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="10" y="10" width="6" height="6" rx="1" fill="white"/>
+                        </svg>
+                    </span>
+                    AI 部署手记
+                </a>
+            </div>
+            <nav class="main-nav" aria-label="主导航">
+                <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/zh/index.html">首页</a></li>                    <li class="has-dropdown" data-dropdown>
+                        <a href="/zh/tools/index.html">工具箱</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/zh/tools/vllm-generator.html">vLLM 启动命令生成器</a></li>
+                            <li><a href="/zh/tools/memory-calculator.html">大模型显存估算器</a></li>
+                            <li><a href="/zh/tools/cost-calculator.html">本地 vs API 成本计算器</a></li>
+                            <li><a href="/zh/tools/deployment-errors.html">常见部署错误及修复方式</a></li>
+                            <li><a href="/zh/tools/deployment-advisor.html">模型部署选型助手</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/zh/posts/index.html">文章</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/zh/posts/index.html?cat=教程">教程</a></li>
+                            <li><a href="/zh/posts/index.html?cat=踩坑">踩坑</a></li>
+                            <li><a href="/zh/posts/index.html?cat=对比">对比</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/zh/about.html">关于</a></li>
+                    <li><a href="/zh/faq.html">FAQ</a></li>
+                    <li><a href="/zh/contact.html">联系</a></li>
+                  <li><a href="/tools/memory-calculator.html" class="lang-switch"><span class="lang-flag">🇺🇸</span> EN</a></li>
+                </ul>
+                <a href="/zh/tools/index.html" class="nav-cta">返回工具箱</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="memory-page">
+        <div class="container">
+            <nav class="memory-breadcrumb" aria-label="面包屑">
+                <a href="/zh/index.html">首页</a> &gt; <a href="/zh/tools/index.html">工具箱</a> &gt; 显存估算器
+            </nav>
+
+            <div class="memory-hero">
+                <h1>大模型显存估算器</h1>
+                <p>精确估算模型权重、KV Cache、激活值和 CUDA 开销。支持模型预设、GPU 预设和显存不足时的智能优化建议。</p>
+            </div>
+
+            <div class="memory-layout">
+                <!-- 左侧表单 -->
+                <div class="memory-form-panel">
+                    <div class="memory-form-group">
+                        <h3>🧠 模型预设</h3>
+                        <label>选择模型
+                            <select id="modelPreset"></select>
+                        </label>
+                        <label id="customModelToggleWrap">
+                            <input type="checkbox" id="customModelToggle"> 使用自定义参数
+                        </label>
+                        <label>量化方式
+                            <select id="quantization"></select>
+                        </label>
+                    </div>
+
+                    <div class="memory-form-group" id="customParamsGroup" style="display:none">
+                        <h3>⚙️ 自定义参数</h3>
+                        <div class="form-grid">
+                            <label>参数量 (B)
+                                <input type="number" id="customParams" min="0.1" max="1000" step="0.1" value="7">
+                            </label>
+                            <label>隐藏层大小
+                                <input type="number" id="customHiddenSize" min="128" max="32768" step="128" value="4096">
+                            </label>
+                            <label>层数
+                                <input type="number" id="customLayers" min="1" max="200" step="1" value="32">
+                            </label>
+                            <label>注意力头数
+                                <input type="number" id="customHeads" min="1" max="256" step="1" value="32">
+                            </label>
+                            <label>KV 头数 (GQA)
+                                <input type="number" id="customKvHeads" min="1" max="256" step="1" value="32">
+                            </label>
+                            <label>最大上下文
+                                <input type="number" id="customMaxContext" min="512" max="200000" step="512" value="8192">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="memory-form-group">
+                        <h3>🚀 运行参数</h3>
+                        <label>上下文长度
+                            <input type="number" id="contextLen" min="512" max="200000" step="512" value="8192">
+                        </label>
+                        <label>并发请求数
+                            <input type="number" id="concurrency" min="1" max="512" step="1" value="4">
+                        </label>
+                        <label>GPU 利用率上限
+                            <input type="number" id="utilization" min="0.5" max="0.95" step="0.01" value="0.9">
+                            <span class="hint">建议 0.85–0.9，生产环境不要超过 0.92</span>
+                        </label>
+                    </div>
+
+                    <div class="memory-form-group">
+                        <h3>🎮 GPU 配置</h3>
+                        <label>选择 GPU
+                            <select id="gpuPreset"></select>
+                        </label>
+                        <label>GPU 数量
+                            <input type="number" id="gpuCount" min="1" max="16" step="1" value="1">
+                        </label>
+                        <label>每张 GPU 显存 (GB)
+                            <input type="number" id="gpuVram" min="4" max="192" step="1" value="24">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 右侧结果 -->
+                <div class="memory-result-panel">
+                    <!-- 状态卡片 -->
+                    <div class="memory-status-card" id="statusCard">
+                        <div class="status-header">
+                            <span class="status-badge" id="statusBadge">计算中...</span>
+                            <div class="status-numbers">
+                                <div><span id="totalVram">--</span> <span class="unit">GB</span> <span class="label">估算需求</span></div>
+                                <div><span id="availableVram">--</span> <span class="unit">GB</span> <span class="label">可用显存</span></div>
+                            </div>
+                        </div>
+                        <div class="status-bar-track">
+                            <div class="status-bar-fill" id="statusBarFill" style="width:0%"></div>
+                        </div>
+                        <div class="status-bar-labels">
+                            <span>0%</span>
+                            <span id="usagePercent">--%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+
+                    <!-- 堆叠条形图 -->
+                    <div class="memory-chart">
+                        <h4>显存构成</h4>
+                        <div class="stacked-bar" id="stackedBar">
+                            <div class="stacked-segment weight" id="segWeight" style="width:0%"><span class="seg-label"></span></div>
+                            <div class="stacked-segment kv" id="segKv" style="width:0%"><span class="seg-label"></span></div>
+                            <div class="stacked-segment activation" id="segActivation" style="width:0%"><span class="seg-label"></span></div>
+                            <div class="stacked-segment overhead" id="segOverhead" style="width:0%"><span class="seg-label"></span></div>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item"><span class="dot weight"></span>模型权重 <strong id="legendWeight">--</strong></div>
+                            <div class="legend-item"><span class="dot kv"></span>KV Cache <strong id="legendKv">--</strong></div>
+                            <div class="legend-item"><span class="dot activation"></span>激活值 <strong id="legendActivation">--</strong></div>
+                            <div class="legend-item"><span class="dot overhead"></span>CUDA 开销 <strong id="legendOverhead">--</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- 多 GPU 分配 -->
+                    <div class="memory-gpu-allocation" id="gpuAllocation" style="display:none">
+                        <h4>每张 GPU 分配</h4>
+                        <div class="gpu-cards" id="gpuCards"></div>
+                    </div>
+
+                    <!-- 反推建议 -->
+                    <div class="memory-suggestions" id="suggestions" style="display:none">
+                        <h4>💡 优化建议</h4>
+                        <ul class="suggestion-list" id="suggestionList"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 关联工具 -->
+            <div class="related-tools">
+                <h3>相关工具</h3>
+                <div class="related-grid">
+                    <a href="/zh/tools/vllm-generator.html" class="related-card">
+                        <strong>vLLM 启动命令生成器</strong>
+                        <span>确认显存够用了？一键生成启动命令。</span>
+                    </a>
+                    <a href="/zh/tools/deployment-advisor.html" class="related-card">
+                        <strong>部署选型助手</strong>
+                        <span>不确定选什么方案？先做个选型。</span>
+                    </a>
+                    <a href="/zh/tools/deployment-errors.html" class="related-card">
+                        <strong>常见部署错误及修复</strong>
+                        <span>部署遇到 OOM？浏览常见错误、根因和修复步骤。</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <span class="footer-logo-mark" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="6" height="6" rx="1" fill="white"/>
+                                <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="1" y="9" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="9" y="9" width="6" height="6" rx="1" fill="white"/>
+                            </svg>
+                        </span>
+                        AI 部署手记
+                    </div>
+                    <p>本地大模型部署实战经验分享，涵盖 vLLM、GPUStack、Qwen 等工具的真实踩坑记录与解决方案。</p>
+                </div>
+                <div class="footer-links">
+                    <h4>快速链接</h4>
+                    <ul>
+                        <li><a href="/zh/index.html">首页</a></li>
+                        <li><a href="/zh/tools/index.html">工具箱</a></li>
+                        <li><a href="/zh/posts/index.html">文章归档</a></li>
+                        <li><a href="/zh/faq.html">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>法律信息</h4>
+                    <ul>
+                        <li><a href="/zh/privacy-policy.html">隐私政策</a></li>
+                        <li><a href="/zh/terms-of-service.html">使用条款</a></li>
+                        <li><a href="/zh/cookie-policy.html">Cookie 政策</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI 部署手记. 保留所有权利。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/main.js"></script>
+    <script src="/js/memory-calculator.js"></script>
+</body>
+</html>

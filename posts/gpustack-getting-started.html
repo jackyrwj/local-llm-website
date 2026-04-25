@@ -10,6 +10,8 @@
     <meta name="twitter:card" content="summary_large_image">
     <title>GPUStack 入门教程：如何管理多个模型实例 — AI 部署手记</title>
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="canonical" href="https://yourdomain.com/posts/gpustack-getting-started.html">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -34,9 +36,15 @@
                 <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
                     <span></span><span></span><span></span>
                 </button>
-                <ul class="nav-menu">
-                    <li><a href="../index.html">首页</a></li>
-                    <li><a href="index.html">文章</a></li>
+                <ul class="nav-menu">                    <li><a href="../index.html">首页</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="index.html">文章</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="index.html?cat=教程">教程</a></li>
+                            <li><a href="index.html?cat=踩坑">踩坑</a></li>
+                            <li><a href="index.html?cat=对比">对比</a></li>
+                        </ul>
+                    </li>
                     <li><a href="../about.html">关于</a></li>
                     <li><a href="../faq.html">FAQ</a></li>
                         <li><a href="../contact.html">联系</a></li>

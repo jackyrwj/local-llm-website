@@ -184,6 +184,71 @@ a:hover { color: var(--primary-dark); }
   font-weight: 600;
 }
 
+/* ── Dropdown menus ─────────────────────────── */
+.has-dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 220px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  padding: .375rem;
+  list-style: none;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity .18s ease, transform .18s ease, visibility .18s;
+  pointer-events: none;
+}
+
+.has-dropdown:hover .dropdown-menu,
+.has-dropdown.open .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: .5rem .75rem;
+  border-radius: var(--r-sm);
+  font-size: .85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: all var(--t);
+}
+
+.dropdown-menu a:hover {
+  color: var(--text);
+  background: var(--bg-muted);
+}
+
+.has-dropdown > a::after {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  margin-left: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+  opacity: .5;
+  transition: transform .2s;
+}
+
+.has-dropdown:hover > a::after,
+.has-dropdown.open > a::after {
+  transform: rotate(-135deg) translateY(1px);
+  opacity: .8;
+}
+
 .nav-cta {
   display: inline-flex;
   align-items: center;
@@ -1659,6 +1724,27 @@ a:hover { color: var(--primary-dark); }
 
   .nav-menu li { border-bottom: 1px solid var(--border); }
   .nav-menu li:last-child { border-bottom: none; }
+
+  .dropdown-menu {
+    position: static;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+    padding-left: 1rem;
+    min-width: auto;
+    display: none;
+  }
+  .has-dropdown.open .dropdown-menu {
+    display: block;
+  }
+  .has-dropdown > a::after {
+    float: right;
+    margin-top: 6px;
+  }
 
   /* Hero: single column */
   .hero { padding: 64px 0; }

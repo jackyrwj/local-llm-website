@@ -16,6 +16,35 @@ if (menuToggle && navMenu) {
   });
 }
 
+// ── Nav dropdowns (hover with delay) ───────────
+document.querySelectorAll('[data-dropdown]').forEach(item => {
+  let timer;
+  const menu = item.querySelector('.dropdown-menu');
+
+  item.addEventListener('mouseenter', () => {
+    clearTimeout(timer);
+    item.classList.add('open');
+  });
+
+  item.addEventListener('mouseleave', () => {
+    timer = setTimeout(() => item.classList.remove('open'), 200);
+  });
+
+  if (menu) {
+    menu.addEventListener('mouseenter', () => clearTimeout(timer));
+    menu.addEventListener('mouseleave', () => {
+      timer = setTimeout(() => item.classList.remove('open'), 200);
+    });
+  }
+});
+
+// Close dropdowns on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('[data-dropdown].open').forEach(el => el.classList.remove('open'));
+  }
+});
+
 // ── Header shadow on scroll ──────────────────
 const siteHeader = document.querySelector('.site-header');
 if (siteHeader) {
@@ -127,7 +156,8 @@ filterButtons.forEach(btn => {
 
 const urlParams = new URLSearchParams(window.location.search);
 const urlCat = urlParams.get('cat');
-if (urlCat && ['教程', '踩坑', '对比'].includes(urlCat)) {
+const validCats = ['all', 'Tutorial', 'Troubleshooting', 'Comparison', '教程', '踩坑', '对比'];
+if (urlCat && validCats.includes(urlCat)) {
   applyFilter(urlCat);
 }
 

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="常见部署错误及修复方式 — 收录本地大模型部署中最常遇到的 CUDA、Docker、vLLM、模型加载和网络错误，含根因分析与可执行的修复步骤。">
+    <meta property="og:title" content="常见部署错误及修复方式 — AI 部署手记">
+    <meta property="og:description" content="常见部署错误及修复方式 — 收录本地大模型部署中最常遇到的 CUDA、Docker、vLLM、模型加载和网络错误，含根因分析与可执行的修复步骤。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourdomain.com/zh/tools/deployment-errors.html">
+    <meta property="og:locale" content="zh_CN">
+    <meta name="keywords" content="CUDA错误,Docker报错,vLLM故障,模型加载失败,部署排错,OOM修复,常见部署错误">
+    <title>常见部署错误及修复方式 — AI 部署手记</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://yourdomain.com/zh/tools/deployment-errors.html">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo">
+                <a href="/zh/index.html">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="6" height="6" rx="1" fill="white"/>
+                            <rect x="10" y="2" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="2" y="10" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="10" y="10" width="6" height="6" rx="1" fill="white"/>
+                        </svg>
+                    </span>
+                    AI 部署手记
+                </a>
+            </div>
+            <nav class="main-nav" aria-label="主导航">
+                <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/zh/index.html">首页</a></li>                    <li class="has-dropdown" data-dropdown>
+                        <a href="/zh/tools/index.html">工具箱</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/zh/tools/vllm-generator.html">vLLM 启动命令生成器</a></li>
+                            <li><a href="/zh/tools/memory-calculator.html">大模型显存估算器</a></li>
+                            <li><a href="/zh/tools/cost-calculator.html">本地 vs API 成本计算器</a></li>
+                            <li><a href="/zh/tools/deployment-errors.html">常见部署错误及修复方式</a></li>
+                            <li><a href="/zh/tools/deployment-advisor.html">模型部署选型助手</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/zh/posts/index.html">文章</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/zh/posts/index.html?cat=教程">教程</a></li>
+                            <li><a href="/zh/posts/index.html?cat=踩坑">踩坑</a></li>
+                            <li><a href="/zh/posts/index.html?cat=对比">对比</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/zh/about.html">关于</a></li>
+                    <li><a href="/zh/faq.html">FAQ</a></li>
+                    <li><a href="/zh/contact.html">联系</a></li>
+                  <li><a href="/tools/deployment-errors.html" class="lang-switch"><span class="lang-flag">🇺🇸</span> EN</a></li>
+                </ul>
+                <a href="/zh/tools/index.html" class="nav-cta">返回工具箱</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="error-kb-page">
+        <div class="container">
+            <nav class="error-kb-breadcrumb" aria-label="面包屑">
+                <a href="/zh/index.html">首页</a> &gt; <a href="/zh/tools/index.html">工具箱</a> &gt; 常见部署错误及修复方式
+            </nav>
+
+            <div class="error-kb-hero">
+                <h1>常见部署错误及修复方式</h1>
+                <p>收录本地大模型部署中最常遇到的错误、根因与可执行的修复步骤</p>
+                <div class="error-kb-count" id="kbCount">当前收录 16 条错误</div>
+            </div>
+
+            <div class="error-kb-search">
+                <input type="text" id="kbSearch" placeholder="搜索错误关键词，如 OOM、端口、CUDA..." autocomplete="off">
+            </div>
+
+            <div class="error-kb-tags">
+                <div class="error-kb-tags-label">技术分类</div>
+                <div class="error-kb-tag-group" id="kbCategoryTags"></div>
+                <div class="error-kb-tags-label">问题类型</div>
+                <div class="error-kb-tag-group" id="kbSubTags"></div>
+            </div>
+
+            <div class="error-kb-active-filters" id="kbActiveFilters"></div>
+
+            <div class="error-kb-grid" id="kbGrid"></div>
+
+            <div class="error-kb-related-tools">
+                <h3>相关工具</h3>
+                <div class="error-kb-related-grid">
+                    <a href="/zh/tools/vllm-generator.html" class="error-kb-related-card">
+                        <strong>vLLM 命令生成器</strong>
+                        <span>生成正确的启动命令，从源头减少配置错误。</span>
+                    </a>
+                    <a href="/zh/tools/memory-calculator.html" class="error-kb-related-card">
+                        <strong>显存估算器</strong>
+                        <span>部署前估算显存需求，提前规避 OOM。</span>
+                    </a>
+                    <a href="/zh/tools/deployment-advisor.html" class="error-kb-related-card">
+                        <strong>部署选型助手</strong>
+                        <span>不确定选什么方案？先做选型。</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <span class="footer-logo-mark" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="6" height="6" rx="1" fill="white"/>
+                                <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="1" y="9" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="9" y="9" width="6" height="6" rx="1" fill="white"/>
+                            </svg>
+                        </span>
+                        AI 部署手记
+                    </div>
+                    <p>本地大模型部署实战经验分享，涵盖 vLLM、GPUStack、Qwen 等工具的真实踩坑记录与解决方案。</p>
+                </div>
+                <div class="footer-links">
+                    <h4>快速链接</h4>
+                    <ul>
+                        <li><a href="/zh/index.html">首页</a></li>
+                        <li><a href="/zh/tools/index.html">工具箱</a></li>
+                        <li><a href="/zh/posts/index.html">文章归档</a></li>
+                        <li><a href="/zh/faq.html">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>法律信息</h4>
+                    <ul>
+                        <li><a href="/zh/privacy-policy.html">隐私政策</a></li>
+                        <li><a href="/zh/terms-of-service.html">使用条款</a></li>
+                        <li><a href="/zh/cookie-policy.html">Cookie 政策</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI 部署手记. 保留所有权利。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/main.js"></script>
+    <script src="/js/deployment-errors.js"></script>
+</body>
+</html>
