@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A complete walkthrough of building a local ChatGPT alternative: vLLM, Qwen3-7B, FastAPI, LobeChat, SQLite, Cloudflare Tunnel, and monitoring — all on one RTX 4090.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Building a Local ChatGPT Alternative: My Full Stack from Scratch — AI Deployment Notes">
+    <meta property="og:description" content="Web UI, API layer, auth, and persistent memory — all running on a single RTX 4090. Here's what I built, what I abandoned, and what I'd do differently.">
+    <meta property="og:url" content="https://local-llm.org/posts/local-chatgpt-stack.html">
+    <meta property="og:locale" content="en_US">
+    <meta property="article:published_time" content="2026-04-26">
+    <meta property="article:section" content="Tutorial">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>Building a Local ChatGPT Alternative: My Full Stack from Scratch — AI Deployment Notes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://local-llm.org/posts/local-chatgpt-stack.html">
+    <meta name="google-adsense-account" content="ca-pub-7451090615788854">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "Building a Local ChatGPT Alternative: My Full Stack from Scratch",
+      "description": "A complete walkthrough of building a local ChatGPT alternative: vLLM, Qwen3-7B, FastAPI, LobeChat, SQLite, Cloudflare Tunnel, and monitoring — all on one RTX 4090.",
+      "datePublished": "2026-04-26",
+      "author": {"@type": "Organization", "name": "AI Deployment Notes"},
+      "publisher": {"@type": "Organization", "name": "AI Deployment Notes"},
+      "articleSection": "Tutorial",
+      "inLanguage": "en"
+    }
+    </script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo"><a href="/index.html">AI Deployment Notes</a></div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/index.html">Home</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Posts</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="lang-switcher">
+                <a href="/zh/posts/index.html" class="lang-link" aria-label="Switch to Chinese">中文</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <article>
+            <header class="post-header">
+                <div class="container">
+                    <span class="post-category cat-tut">Tutorial</span>
+                    <h1>Building a Local ChatGPT Alternative: My Full Stack from Scratch</h1>
+                    <div class="post-meta">
+                        <time datetime="2026-04-26">April 26, 2026</time>
+                        <span>·</span>
+                        <span class="read-time">9 min read</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="post-body">
+                <div class="container">
+
+<p>I wanted ChatGPT, but I wanted it to live in my house. Not on OpenAI's servers. Not subject to rate limits, content filters, or API bills that spike when I run a batch job. I wanted to open a browser tab, type a prompt, and get an answer from a model I controlled — with conversation history that persisted across sessions and access from my phone without a VPN.</p>
+
+<p>This is the story of how I built that. It took six weeks, three complete rewrites of the middle layer, and one 2 AM debugging session where I realized my auth middleware was checking tokens against the wrong database table. The stack I ended up with is not the most elegant. It is the one that survived contact with reality.</p>
+
+<p>My hardware: a single workstation with an RTX 4090 (24GB VRAM), 64GB DDR5 system RAM, a Ryzen 9 7950X, and a 2TB NVMe SSD. The machine sits in my office, draws about 450 watts under load, and cost roughly $3,400 to build. It runs Ubuntu 22.04 and has been online for five months.</p>
+
+<h2>Architecture Overview</h2>
+
+<p>Here is what the full stack looks like, from the browser down to the GPU:</p>
+
+<pre><code>┌─────────────────────────────────────────────┐
+│  Browser / Phone / API Client               │
+│  (HTTPS via llm.mydomain.com)               │
+└──────────────┬──────────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────────┐
+│  Cloudflare Tunnel (outbound, no open ports)│
+└──────────────┬──────────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────────┐
+│  LobeChat (Docker, port 3210)               │
+│  - Chat UI, conversation history            │
+│  - Reads/writes to SQLite                   │
+└──────────────┬──────────────────────────────┘
+               │  OpenAI-compatible API calls
+               ▼
+┌─────────────────────────────────────────────┐
+│  FastAPI Wrapper (port 8001)                │
+│  - Token auth                               │
+│  - Request validation & logging             │
+│  - Conversations stored in SQLite           │
+└──────────────┬──────────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────────┐
+│  vLLM (port 8000)                           │
+│  - Qwen3-7B-Instruct (AWQ 4-bit)            │
+│  - PagedAttention, continuous batching      │
+└──────────────┬──────────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────────┐
+│  RTX 4090 (24GB VRAM)                       │
+│  - Model weights: ~4.5GB (AWQ)              │
+│  - KV cache: up to ~16GB at 8K context      │
+└─────────────────────────────────────────────┘</code></pre>
+
+<p>Every layer has a reason for being there. I will explain each one, including what I tried first and why I switched.</p>
+
+<h2>Model Layer: vLLM with Qwen3-7B</h2>
+
+<p>I started with Ollama. It took 30 seconds to install and I had a working chat interface by dinner. But Ollama processes requests sequentially. When I opened two browser tabs and sent prompts simultaneously, the second one waited. When I tried to run a batch script against the API while chatting, the chat froze.</p>
+
+<p>I switched to vLLM because of continuous batching. Under the hood, vLLM uses PagedAttention to share memory between requests and fill batches dynamically. With Ollama, two concurrent requests meant one waits. With vLLM, two concurrent requests means they run together, and the GPU utilization jumps from 35% to 90%.</p>
+
+<p>I chose Qwen3-7B-Instruct because it punches above its weight. On my reasoning benchmarks, it outperformed Llama-3.1-8B and Mistral-7B on math and code tasks. The 7B size fits comfortably in VRAM even at FP16, but I run it in AWQ 4-bit to leave headroom for long contexts.</p>
+
+<p>Here is the exact startup command I use, wrapped in a systemd service:</p>
+
+<pre><code>[Unit]
+Description=vLLM API Server
+After=network.target
+
+[Service]
+Type=simple
+User=llm
+WorkingDirectory=/home/llm
+ExecStart=/home/llm/venv/bin/python -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen3-7B-Instruct \
+  --quantization awq \
+  --max-model-len 8192 \
+  --gpu-memory-utilization 0.85 \
+  --port 8000 \
+  --host 127.0.0.1 \
+  --allowed-origins "*"
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+
+<p>The <code>--host 127.0.0.1</code> is intentional. vLLM does not face the internet directly. Only the FastAPI wrapper on port 8001 talks to it, and only Cloudflare Tunnel talks to the outside world. If something goes wrong at the edge, the model server is not exposed.</p>
+
+<p>I tried GPTQ first because the files were smaller, but switched to AWQ after noticing a 12% accuracy drop on my math test set. AWQ costs slightly more VRAM but the quality is closer to FP16. For a 7B model, the difference is negligible. For a 70B model, I might reconsider.</p>
+
+<h2>API Layer: FastAPI Wrapper</h2>
+
+<p>vLLM's built-in OpenAI API server is solid, but it has no authentication, no request logging, and no conversation persistence. I needed all three. So I wrote a thin FastAPI wrapper that sits between LobeChat and vLLM.</p>
+
+<p>I tried using vLLM directly at first. I put an nginx reverse proxy in front of it with basic auth and called it done. That lasted three days. The problem: LobeChat expects standard OpenAI error codes, and nginx basic auth returns 401 with an HTML body that breaks LobeChat's JSON parser. I also had no way to log which user sent which prompt, and no way to store conversation threads.</p>
+
+<p>The FastAPI wrapper does four things:</p>
+
+<ol>
+    <li><strong>Token validation.</strong> Every request must include <code>Authorization: Bearer &lt;token&gt;</code>. Tokens are SHA-256 hashes stored in SQLite. I have two: one for my laptop, one for my phone. If a token leaks, I revoke it in 30 seconds.</li>
+    <li><strong>Request logging.</strong> Every prompt, response, token count, and timestamp goes into a <code>requests</code> table. I use this for debugging and for spotting anomalies — like the night my phone app got stuck in a loop and sent 200 requests in 10 minutes.</li>
+    <li><strong>Conversation persistence.</strong> The wrapper maintains a <code>conversations</code> table. When LobeChat sends a thread ID, the wrapper fetches prior messages from SQLite, prepends them to the prompt, and sends the full context to vLLM. This means I can close a tab, reopen it tomorrow, and the conversation continues.</li>
+    <li><strong>Error normalization.</strong> vLLM's error messages are informative for engineers and baffling for UIs. The wrapper catches common failures — OOM, model not found, context too long — and returns clean OpenAI-compatible JSON with human-readable <code>message</code> fields.</li>
+</ol>
+
+<p>The core of the wrapper is about 180 lines of Python. Here is the simplified request handler:</p>
+
+<pre><code>@app.post("/v1/chat/completions")
+async def chat_completions(request: ChatRequest, token: str = Header(None)):
+    if not validate_token(token):
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    # Load conversation history
+    messages = load_history(request.conversation_id)
+    messages.extend(request.messages)
+
+    # Forward to vLLM
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            "http://127.0.0.1:8000/v1/chat/completions",
+            json={"model": request.model, "messages": messages, **request.params},
+            timeout=120.0
+        )
+
+    # Log and store
+    log_request(token, request, resp)
+    if request.conversation_id:
+        append_to_conversation(request.conversation_id, messages, resp.json())
+
+    return resp.json()</code></pre>
+
+<p>I run this with uvicorn inside a virtual environment, also as a systemd service. Startup time is under 2 seconds. Memory footprint is about 80MB — negligible next to vLLM's 18GB.</p>
+
+<h2>UI Layer: LobeChat</h2>
+
+<p>I tried OpenWebUI first. It is beautiful, actively maintained, and has a huge feature set. I ran it for two weeks and then uninstalled it.</p>
+
+<p>The problem was not OpenWebUI's quality. The problem was its complexity. It requires a full Node.js build, a PostgreSQL database for persistence, and a Redis cache for real-time features. On my single-GPU machine, that meant four additional services running alongside vLLM. The startup time from a cold boot was over 90 seconds. More importantly, OpenWebUI's model provider system assumes you are connecting to cloud APIs or Ollama. Getting it to talk to my FastAPI wrapper involved editing internal config files and rebuilding the frontend.</p>
+
+<p>I switched to LobeChat because it is a static frontend. The Docker image is a prebuilt Next.js export. It starts in 3 seconds. It connects to any OpenAI-compatible endpoint by pasting a URL. And it stores conversations in localStorage by default, with an optional PostgreSQL backend if you need persistence.</p>
+
+<p>My LobeChat Docker Compose file:</p>
+
+<pre><code>version: '3.8'
+services:
+  lobechat:
+    image: lobehub/lobe-chat:latest
+    ports:
+      - "3210:3210"
+    environment:
+      - ACCESS_CODE=your-admin-password
+      - OPENAI_API_KEY=sk-local
+      - OPENAI_PROXY_URL=http://host.docker.internal:8001/v1
+    volumes:
+      - ./lobe-data:/app/.config/lobe-chat
+    restart: unless-stopped</code></pre>
+
+<p>The <code>OPENAI_PROXY_URL</code> points to my FastAPI wrapper. The <code>ACCESS_CODE</code> prevents random visitors from using the UI. I also override the model name in LobeChat's settings so it sends <code>Qwen/Qwen3-7B-Instruct</code> instead of <code>gpt-3.5-turbo</code>.</p>
+
+<p>LobeChat is not perfect. The mobile view is usable but not polished. Plugin support is limited compared to OpenWebUI. But for my use case — a clean chat interface that talks to my local API — it is exactly the right weight.</p>
+
+<h2>Auth: Simple Token-Based</h2>
+
+<p>I considered OAuth. I even set up a Keycloak container and wired it into the FastAPI wrapper. It worked. It also added 400MB of JVM memory usage, a separate database for user sessions, and a login flow that took 8 seconds on mobile.</p>
+
+<p>For a single-user system, OAuth is overkill. I tore it out after a week and replaced it with a simple token table in SQLite. Two columns: <code>token_hash</code> and <code>description</code>. I generate tokens with <code>secrets.token_urlsafe(32)</code>, hash them with SHA-256, and store the hash. The plaintext token lives in my password manager and in environment variables on my devices.</p>
+
+<p>There is no refresh flow, no session expiry, no password reset. If I need to revoke access, I delete the row. If I need to add a device, I insert a new row. The entire auth system is 12 lines of Python and one SQL table.</p>
+
+<p>The only security concern is that tokens are bearer tokens — anyone who intercepts one can use it. I mitigate this by running everything over HTTPS via Cloudflare Tunnel, and by keeping vLLM itself on localhost so it is never directly exposed. For a personal deployment, this is sufficient. If I were sharing this with a team, I would add token expiry and IP allowlisting.</p>
+
+<h2>Persistent Memory: SQLite</h2>
+
+<p>Conversation history lives in SQLite. I started with PostgreSQL because it felt more "production," but maintaining a PostgreSQL container for a single-user chatbot was absurd. Backups were harder. Migrations were unnecessary. The connection pool added complexity with no benefit.</p>
+
+<p>SQLite is a single file. I back it up with <code>cp conversations.db conversations.db.backup</code> before every model update. The schema is three tables:</p>
+
+<pre><code>CREATE TABLE tokens (
+    token_hash TEXT PRIMARY KEY,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE conversations (
+    id TEXT PRIMARY KEY,
+    title TEXT,
+    model TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id TEXT REFERENCES conversations(id),
+    role TEXT,
+    content TEXT,
+    tokens_prompt INTEGER,
+    tokens_completion INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+
+<p>The database file is currently 14MB after five months of daily use. Query times are under 5 milliseconds. I have never had to optimize an index.</p>
+
+<p>I did consider using LobeChat's built-in PostgreSQL support for persistence, but that would have tied my data to LobeChat's schema. Keeping conversations in my own SQLite database means I can swap UIs without losing history. If LobeChat breaks or I want to try something else, my data stays intact.</p>
+
+<h2>Reverse Proxy: Cloudflare Tunnel</h2>
+
+<p>I wrote a separate article about this setup, but the summary is: Cloudflare Tunnel creates an outbound connection from my server to Cloudflare's edge. No open ports. No public IP exposure. HTTPS and DDoS protection are free.</p>
+
+<p>I tried port forwarding first. It worked for 20 minutes. Then I ran a port scan on my own public IP and found that port 8000 was already being probed by bots. I closed the port, installed <code>cloudflared</code>, and never looked back.</p>
+
+<p>My tunnel config:</p>
+
+<pre><code>tunnel: &lt;UUID&gt;
+credentials-file: /home/llm/.cloudflared/&lt;UUID&gt;.json
+
+ingress:
+  - hostname: llm.mydomain.com
+    service: http://localhost:3210
+  - service: http_status:404</code></pre>
+
+<p>The tunnel points to LobeChat on port 3210. I do not expose the FastAPI wrapper or vLLM directly. If someone finds my subdomain, they get the LobeChat login page. They cannot reach the API without a valid token, and they cannot reach vLLM at all.</p>
+
+<p>I also use Cloudflare Access as a second gate. Before LobeChat loads, Cloudflare shows an identity check. Only my email address is allowed through. This means an attacker needs to bypass Cloudflare's auth, guess my LobeChat admin password, and steal my API token before they can send a single prompt. I am comfortable with that risk profile.</p>
+
+<h2>Monitoring: What I Check</h2>
+
+<p>I do not run Prometheus or Grafana. For one GPU and one user, that is theater. Instead, I have three lightweight checks.</p>
+
+<p><strong>1. Netdata for resource alerts.</strong> I installed netdata with their kickstart script. It monitors GPU temperature, utilization, and VRAM usage. I get a Discord webhook alert if the GPU stays above 85C for more than 3 minutes, or if VRAM usage hits 95%. These thresholds have caught two issues: a runaway script that pinned the GPU at 100%, and a dust buildup that raised idle temps by 8 degrees.</p>
+
+<p><strong>2. A simple health endpoint.</strong> My FastAPI wrapper exposes <code>GET /health</code>, which checks that vLLM is responding and that the database connection is alive. I have a cron job on a VPS that pings this every 5 minutes. If it fails twice in a row, I get an email. In five months, it has fired once — during a CUDA driver update that required a reboot.</p>
+
+<p><strong>3. Weekly log review.</strong> Every Sunday morning, I run:</p>
+
+<pre><code>grep -i "error\|oom\|timeout" /var/log/llm-wrapper.log | tail -20</code></pre>
+
+<p>This takes 10 seconds. Most weeks, there is nothing. When there is something, it is usually a context-length exceeded error from a long paste I forgot about.</p>
+
+<h2>What I Abandoned and Why</h2>
+
+<p><strong>GPUStack.</strong> I used GPUStack for a month and loved the web dashboard. But it added a full control plane I did not need. For a single model on a single GPU, GPUStack's scheduling and multi-model features were dead weight. I also hit a bug where GPUStack would not restart vLLM after a crash without manual intervention. I went back to raw vLLM with systemd.</p>
+
+<p><strong>OpenWebUI.</strong> Already covered, but worth repeating: it is a great tool for teams. For one person, the setup cost exceeds the benefit.</p>
+
+<p><strong>LangChain for the wrapper.</strong> I initially built the FastAPI wrapper using LangChain's OpenAI-compatible adapter. It added 300MB of dependencies and abstracted away the request flow to the point where debugging was painful. I rewrote it with plain <code>httpx</code> and <code>pydantic</code>. The new version is faster, smaller, and I can read every line and know what it does.</p>
+
+<p><strong>Redis for caching.</strong> I thought I would cache frequent prompts. In practice, I almost never send the exact same prompt twice. Redis sat idle for a week, consuming 100MB of RAM, before I removed it.</p>
+
+<p><strong>Docker for vLLM.</strong> I ran vLLM in Docker for the first month to avoid CUDA version conflicts. It worked, but passing the GPU through added friction, and container networking made localhost assumptions brittle. I switched to a system-wide virtual environment with pinned dependencies. One <code>requirements.txt</code>, one systemd service, no layers.</p>
+
+<h2>Total Resource Usage on RTX 4090</h2>
+
+<p>Here is what the system looks like under normal load — one user chatting, occasional API calls:</p>
+
+<ul>
+    <li><strong>vLLM:</strong> ~18GB VRAM, 15-45% GPU utilization during chat, 0% idle</li>
+    <li><strong>FastAPI wrapper:</strong> ~80MB RAM, 0% GPU</li>
+    <li><strong>LobeChat (Docker):</strong> ~120MB RAM, 0% GPU</li>
+    <li><strong>SQLite:</strong> ~15MB disk, negligible RAM</li>
+    <li><strong>Cloudflared:</strong> ~30MB RAM, 0% GPU</li>
+    <li><strong>Netdata:</strong> ~150MB RAM, 0% GPU</li>
+    <li><strong>System overhead:</strong> ~2GB RAM</li>
+</ul>
+
+<p>Total system RAM usage: about 4GB out of 64GB. The remaining 60GB is available for large context windows, batch jobs, or running a second model if I ever need one.</p>
+
+<p>GPU utilization during a typical chat session peaks at 60% and idles at 0%. The RTX 4090's fans do not even spin up for short prompts. Only sustained batch processing or long-context summarization pushes utilization above 80%.</p>
+
+<p>Power draw: 45 watts idle, 320 watts under sustained load, 450 watts peak during model loading. At my electricity rate of $0.14 per kWh, running the server 8 hours a day costs about $0.55 daily, or $16 per month. For unlimited inference with no token limits, that is effectively free compared to cloud API pricing.</p>
+
+<h2>What I'd Do Differently</h2>
+
+<p>If I were building this again today, I would make three changes.</p>
+
+<p><strong>1. Start with the wrapper.</strong> I spent two weeks trying to make vLLM's built-in server do everything before accepting that I needed a middle layer. Writing the FastAPI wrapper took four hours. Those two weeks of fighting vLLM's limitations were wasted.</p>
+
+<p><strong>2. Use AWQ from day one.</strong> I started with FP16 because I was afraid of quality loss. Then I ran out of VRAM at 6K context and had to switch anyway. AWQ 4-bit gives me 95% of FP16 quality with 75% less memory. I should have benchmarked quantization methods before deploying, not after.</p>
+
+<p><strong>3. Document the token rotation process.</strong> I have two tokens right now. When I needed to revoke one last month, I could not remember which hash corresponded to which device. I had to revoke both and regenerate. A simple <code>description</code> field in the tokens table would have prevented this. I added it, but I should have designed for it from the start.</p>
+
+<p>One thing I would not change: keeping it simple. Every time I added a tool that was "industry standard" — PostgreSQL, Redis, Keycloak, Docker for everything — the system got worse. The stack that works is the stack I can debug at 2 AM without reading documentation. SQLite, systemd, and a 180-line Python file are boring. They are also reliable.</p>
+
+<h2>Parting Notes</h2>
+
+<p>This stack is not a product. It is a personal tool that happens to be stable enough to share. If you are building something similar, resist the urge to over-engineer. You do not need Kubernetes for one GPU. You do not need OAuth for one user. You do not need a distributed database for 14MB of chat history.</p>
+
+<p>Start with vLLM and a model that fits your VRAM. Add a thin API layer when you need auth or persistence. Pick a UI that gets out of your way. Put a tunnel in front of it so you can sleep. Then use it. The best stack is the one you actually run, not the one that looks impressive in a diagram.</p>
+
+<p>My server has been running for five months. It has survived driver updates, power outages, and one accidental <code>rm -rf</code> in the wrong directory (backups saved me). The total maintenance time averages about 10 minutes per week. Most of that is reading logs and confirming that nothing is wrong. That is the goal: a system so boring that you forget it exists, until you open a browser tab and it answers your question.</p>
+
+                </div>
+            </div>
+        </article>
+
+        <section class="adsense-slot">
+            <div class="adsense-placeholder">
+                AdSense ad slot (mid-content) — replace with real ad code after deployment
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">AI Deployment Notes</div>
+                    <p>Hands-on guides for local LLM deployment, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Field Notes · Pitfall Guides · Daily Updates</span>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Posts</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Field Notes</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>This site uses cookies to analyze traffic. By continuing, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

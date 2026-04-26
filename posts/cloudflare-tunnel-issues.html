@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Six Cloudflare Tunnel errors I hit while exposing my local LLM, what didn't work, and the actual fixes — with a running time-wasted counter.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Cloudflare Tunnel for Local AI: Every Issue I Hit and How I Fixed It">
+    <meta property="og:description" content="Six error messages, three red herrings, and one DNS propagation that took 47 minutes. My complete Cloudflare Tunnel war journal.">
+    <meta property="og:url" content="https://local-llm.org/posts/cloudflare-tunnel-issues.html">
+    <meta property="og:locale" content="en_US">
+    <meta property="article:published_time" content="2026-04-26">
+    <meta property="article:section" content="Field Notes">
+    <title>Cloudflare Tunnel for Local AI: Every Issue I Hit and How I Fixed It — AI Deployment Notes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://local-llm.org/posts/cloudflare-tunnel-issues.html">
+    <meta name="google-adsense-account" content="ca-pub-7451090615788854">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo">
+                <a href="/index.html">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="6" height="6" rx="1" fill="white"/>
+                            <rect x="10" y="2" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="2" y="10" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="10" y="10" width="6" height="6" rx="1" fill="white"/>
+                        </svg>
+                    </span>
+                    AI Deployment Notes
+                </a>
+            </div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/index.html">Home</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Articles</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
+                </ul>
+                <a href="/tools/index.html" class="nav-cta">Open Toolkit</a>
+                <a href="/zh/posts/index.html" class="lang-switch">中文</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="reading-progress" id="readingProgress"></div>
+
+        <section class="post-header">
+            <div class="container">
+                <span class="post-category cat-fn">Field Notes</span>
+                <h1>Cloudflare Tunnel for Local AI: Every Issue I Hit and How I Fixed It</h1>
+                <div class="post-meta">
+                    <time datetime="2026-04-26">April 26, 2026</time>
+                    <span class="separator">&middot;</span>
+                    <span class="read-time">7 min read</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="post-body">
+            <div class="container">
+
+                <p>Cloudflare Tunnel is the best way to expose a local LLM to the internet. It is also a black box that will waste your afternoon if you do not know what to look for. I have been running tunnels for four months, and I have collected six distinct failure modes — each one cost me real time, each one had a simple fix, and each one was completely non-obvious from the error message.</p>
+
+                <p>This is the companion to my setup guide: what happens after you follow the instructions and things still break. I will show you the exact error, what I tried that did not work, and what actually fixed it. Every issue has a "time wasted" counter because I think it is important to be honest about how long these things take.</p>
+
+                <p>Running total before we start: zero. Let's see where we end up.</p>
+
+                <h2>Error 1: "Failed to create quic connection"</h2>
+
+                <p><strong>Time wasted: 35 minutes</strong></p>
+
+                <p>I installed cloudflared, ran <code>cloudflared tunnel run local-llm</code>, and got this:</p>
+
+<pre><code>ERR Failed to create quic connection error="failed to dial to edge with quic: timeout: no recent network activity"
+INF Retrying connection in up to 2s seconds</code></pre>
+
+                <p>The tunnel retried forever. I checked status.cloudflare.com — green. I checked my connection — 800 Mbps. I restarted my router. Nothing changed. I tried <code>--protocol http2</code>. Same error. I read GitHub issues about IPv6 blocking. I checked UFW rules and Pi-hole blocklists. Nothing was blocked.</p>
+
+                <p>The actual fix: the error is not about your firewall — it is about DNS resolution. cloudflared needs to resolve <code>region1.v2.argotunnel.com</code>. If your DNS returns an IPv6 address and your network does not route IPv6, the connection times out. The QUIC library tries IPv6 first, fails, and the IPv4 fallback sometimes does not happen fast enough.</p>
+
+                <p>I forced IPv4:</p>
+
+<pre><code>cloudflared tunnel run --edge-ip-version 4 local-llm</code></pre>
+
+                <p>It connected instantly. I later moved <code>edge-ip-version: 4</code> into <code>config.yml</code>. The lesson: "timeout: no recent network activity" means DNS gave cloudflared an address it could not reach. IPv6 is the most common culprit.</p>
+
+                <h2>Error 2: Tunnel Shows Healthy but Requests Timeout</h2>
+
+                <p><strong>Time wasted: 52 minutes</strong></p>
+
+                <p>The tunnel was running. <code>cloudflared tunnel info local-llm</code> showed "Healthy." But visiting <code>https://llm.yourdomain.com</code> produced a 30-second spin followed by a 502 or a straight timeout. The behavior was inconsistent — about one in five requests would return the 502. The rest hung indefinitely.</p>
+
+                <p>I checked the cloudflared logs. They showed the tunnel receiving and forwarding the request. No errors. But the "request finished" line never appeared for hung requests. I checked <code>nvidia-smi</code> — vLLM running, GPU idle. I curled <code>http://localhost:8000/v1/models</code> from the server itself. Instant response. The local service was fine.</p>
+
+                <p>I tried <code>--log-level debug</code>. The tunnel opened a connection to localhost:8000, then silence. I restarted vLLM and cloudflared, changed the ingress to <code>http://127.0.0.1:8000</code>. No change.</p>
+
+                <p>The actual problem: vLLM was bound to <code>127.0.0.1</code> only, and cloudflared was connecting over IPv6 loopback <code>::1</code> because my system preferred IPv6. glibc resolved "localhost" to <code>::1</code> first. vLLM was not listening on <code>::1</code>. The connection hung until timeout. The intermittent 502s happened when the IPv4 fallback kicked in fast enough.</p>
+
+                <p>The fix was to tell vLLM to listen on all interfaces:</p>
+
+<pre><code>python -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen3-7B-Instruct \
+  --host 0.0.0.0 \
+  --port 8000</code></pre>
+
+                <p>Then I updated the tunnel config to use the explicit IPv4 address:</p>
+
+<pre><code>ingress:
+  - hostname: llm.yourdomain.com
+    service: http://127.0.0.1:8000</code></pre>
+
+                <p>Every request went through instantly. The lesson: "localhost" is not your friend in a dual-stack environment. Be explicit about 127.0.0.1 or bind to 0.0.0.0. The tunnel health check only verifies that cloudflared can reach Cloudflare's edge. It says nothing about whether cloudflared can reach your local service.</p>
+
+                <h2>Error 3: 502 Bad Gateway — Service Crashed or Wrong Port</h2>
+
+                <p><strong>Time wasted: 18 minutes</strong></p>
+
+                <p>I was testing a new model and had started vLLM on port 8001 instead of 8000. I forgot to update the tunnel config. The browser showed:</p>
+
+<pre><code>502 Bad Gateway
+cloudflare-nginx</code></pre>
+
+                <p>I checked <code>cloudflared tunnel info</code>. Healthy. The raw log at <code>/var/log/cloudflared.log</code> showed:</p>
+
+<pre><code>ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared"</code></pre>
+
+                <p>Once I found that line, the fix was obvious: move vLLM back to 8000 or update the tunnel config. I also learned cloudflared caches the ingress config — editing <code>config.yml</code> requires a full restart:</p>
+
+<pre><code>sudo systemctl restart cloudflared</code></pre>
+
+                <h2>Error 4: Certificate Errors in the Browser</h2>
+
+                <p><strong>Time wasted: 41 minutes</strong></p>
+
+                <p>I visited <code>https://llm.yourdomain.com</code> and Chrome showed:</p>
+
+<pre><code>NET::ERR_CERT_AUTHORITY_INVALID
+This server could not prove that it is llm.yourdomain.com</code></pre>
+
+                <p>The weird part: Safari on my phone loaded fine. Firefox on my laptop loaded fine. Only Chrome complained. The certificate details showed it was issued by "Cloudflare Origin CA," not the usual DigiCert or Let's Encrypt.</p>
+
+                <p>I spent 20 minutes toggling SSL/TLS settings between "Full (strict)," "Full," and "Flexible." I purged the Cloudflare cache. I flushed local DNS. I deleted Chrome's SSL state from <code>chrome://net-internals/#ssl</code>. Nothing helped.</p>
+
+                <p>What I had done: I created a Cloudflare Origin certificate and installed it on a local nginx reverse proxy. The origin cert was valid for my domain, but not trusted by my macOS certificate store. Chrome uses the system keychain. Safari and Firefox handled the Cloudflare Origin CA differently.</p>
+
+                <p>The fix was switching SSL/TLS encryption mode to "Full" instead of "Full (strict)." "Full" mode encrypts between Cloudflare and the origin but does not validate the origin certificate. Since the traffic never leaves Cloudflare's network, this is still secure.</p>
+
+                <p>The real lesson: if you are using Cloudflare Tunnel, you do not need an origin certificate at all. The tunnel itself is the secure transport. Adding nginx with TLS is unnecessary complexity. I removed nginx and let cloudflared talk directly to vLLM.</p>
+
+                <h2>Error 5: DNS Propagation Taking Forever</h2>
+
+                <p><strong>Time wasted: 47 minutes</strong></p>
+
+                <p>I created the tunnel, ran <code>cloudflared tunnel route dns local-llm llm.yourdomain.com</code>, and waited. The command succeeded. The dashboard showed the CNAME. But the browser returned:</p>
+
+<pre><code>DNS_PROBE_FINISHED_NXDOMAIN</code></pre>
+
+                <p>I checked with <code>dig</code>:</p>
+
+<pre><code>$ dig llm.yourdomain.com
+
+;; ANSWER SECTION:
+llm.yourdomain.com.  300  IN  CNAME  &lt;tunnel-uuid&gt;.cfargotunnel.com.</code></pre>
+
+                <p>The CNAME was there. But resolving the target <code>cfargotunnel.com</code> returned NXDOMAIN from some resolvers. Google DNS (8.8.8.8) worked. My ISP's DNS failed. Cloudflare's resolver (1.1.1.1) worked. The problem was that my router used my ISP's DNS, which had not cached the new CNAME target.</p>
+
+                <p>I flushed my local DNS cache and switched my laptop to 1.1.1.1. That worked, but my phone still failed because it uses the router's DNS. I waited. That was the actual fix.</p>
+
+                <p>DNS propagation is not a technical problem you solve — it is a distributed system problem you endure. The TTL was 300 seconds, but some resolvers ignore TTLs. My ISP's DNS took 47 minutes. There is no command to force it.</p>
+
+                <p>What I do now: test with <code>dig @1.1.1.1</code> immediately. If that works, the rest is waiting. I also lower the TTL to 60 seconds before DNS changes, then raise it back to 300 after.</p>
+
+                <h2>Error 6: Tunnel Randomly Disconnecting</h2>
+
+                <p><strong>Time wasted: 1 hour 23 minutes</strong></p>
+
+                <p>This was the worst one because it was intermittent. The tunnel would run fine for hours, then disconnect without warning. The cloudflared process was still running. Systemd showed "active (running)." But <code>cloudflared tunnel info</code> showed "Down" and requests failed with 502.</p>
+
+                <p>The logs showed nothing useful at INFO level. At DEBUG level, I saw periodic "heartbeat" messages that just stopped. No error. No crash. The connection went silent.</p>
+
+                <p>I suspected my ISP was dropping idle UDP connections. I tried <code>--heartbeat-interval 5s</code>. It did not help. The systemd service had <code>Restart=on-failure</code>. When the tunnel silently dropped, cloudflared did not exit with a failure code — it just hung. systemd only restarts on failure. A hung process is not a failed process. The tunnel stayed down until I manually restarted it.</p>
+
+                <p>I fixed it with a systemd override:</p>
+
+<pre><code>sudo systemctl edit cloudflared
+
+[Service]
+WatchdogSec=30
+Restart=always
+RestartSec=10
+StartLimitInterval=0</code></pre>
+
+                <p><code>WatchdogSec=30</code> tells systemd to expect a keepalive every 30 seconds. If it does not arrive, systemd kills and restarts the service. <code>Restart=always</code> restarts on any exit, not just failures. <code>StartLimitInterval=0</code> removes the rate limit so systemd does not give up.</p>
+
+                <p>I also added a cron job:</p>
+
+<pre><code>*/5 * * * * /usr/bin/cloudflared tunnel info local-llm | grep -q "Healthy" || sudo systemctl restart cloudflared</code></pre>
+
+                <p>Between the watchdog and the cron check, the tunnel has been stable for three months. It still drops occasionally, but recovers within 30 seconds. The lesson: systemd defaults are designed for well-behaved daemons. Network tunnels are not well-behaved. You need aggressive restart policies and health checks.</p>
+
+                <h2>The Final Tally</h2>
+
+                <p>Let's add it up:</p>
+
+                <ul>
+                    <li>QUIC connection failure: 35 minutes</li>
+                    <li>Healthy tunnel, timeout requests: 52 minutes</li>
+                    <li>502 from wrong port: 18 minutes</li>
+                    <li>Certificate mismatch: 41 minutes</li>
+                    <li>DNS propagation: 47 minutes</li>
+                    <li>Random disconnections: 83 minutes</li>
+                </ul>
+
+                <p><strong>Total time wasted: 4 hours 36 minutes.</strong></p>
+
+                <p>That is a full afternoon of debugging that could have been avoided if I had known these six patterns in advance. Cloudflare Tunnel is marketed as "zero configuration." It is — for the simple case. Behind a residential ISP with dual-stack networking and systemd services, it is very much not zero configuration. Here is what I do differently now:</p>
+
+                <ul>
+                    <li>Always set <code>edge-ip-version: 4</code> in the config</li>
+                    <li>Always bind local services to <code>0.0.0.0</code> and point the tunnel at <code>127.0.0.1</code></li>
+                    <li>Always restart cloudflared after editing config.yml</li>
+                    <li>Never add TLS between cloudflared and the local service — the tunnel is enough</li>
+                    <li>Always test DNS with <code>dig @1.1.1.1</code> and wait patiently for propagation</li>
+                    <li>Always configure systemd with <code>Restart=always</code> and a watchdog</li>
+                </ul>
+
+                <p>Cloudflare Tunnel is still the right tool for exposing local AI services. I would not go back to port forwarding or VPNs. But I no longer expect it to "just work" — I expect it to work after I have configured it properly. If you are setting up your first tunnel, budget an extra hour for debugging. Read this article first. Save yourself the 4 hours and 36 minutes I spent earning these lessons.</p>
+
+            </div>
+        </section>
+
+        <section class="adsense-slot">
+            <div class="adsense-placeholder">
+                AdSense ad slot (mid-content) — replace with real ad code after deployment
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <span class="footer-logo-mark" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="6" height="6" rx="1" fill="white"/>
+                                <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="1" y="9" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="9" y="9" width="6" height="6" rx="1" fill="white"/>
+                            </svg>
+                        </span>
+                        AI Deployment Notes
+                    </div>
+                    <p>Practical local LLM deployment experience, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Hands-on Notes · Pitfall Guides · Daily Updates</span>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Article Archive</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Deployment Notes</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>This site uses cookies to analyze traffic. By continuing to browse, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>
