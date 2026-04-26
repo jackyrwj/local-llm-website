@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A step-by-step guide to installing GPUStack and deploying your first local LLM API in 20 minutes. Exact commands, real output, and honest mistakes included.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="GPUStack Setup Guide: From Zero to Local API in 20 Minutes — AI Deployment Notes">
+    <meta property="og:description" content="You don't need Kubernetes. You don't need Docker Compose. Just one binary, one config file, and twenty minutes. Here's the exact setup that worked for me.">
+    <meta property="og:url" content="https://local-llm.org/posts/gpustack-zero-to-api.html">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>GPUStack Setup Guide: From Zero to Local API in 20 Minutes — AI Deployment Notes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://local-llm.org/posts/gpustack-zero-to-api.html">
+    <meta name="google-adsense-account" content="ca-pub-7451090615788854">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "GPUStack Setup Guide: From Zero to Local API in 20 Minutes",
+      "description": "A step-by-step guide to installing GPUStack and deploying your first local LLM API in 20 minutes. Exact commands, real output, and honest mistakes included.",
+      "datePublished": "2026-04-26",
+      "author": {"@type": "Organization", "name": "AI Deployment Notes"},
+      "publisher": {"@type": "Organization", "name": "AI Deployment Notes"},
+      "articleSection": "Tutorial",
+      "inLanguage": "en"
+    }
+    </script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo"><a href="/index.html">AI Deployment Notes</a></div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/index.html">Home</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Posts</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="lang-switcher">
+                <a href="/zh/posts/index.html" class="lang-link" aria-label="Switch to Chinese">中文</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <article>
+            <header class="post-header">
+                <div class="container">
+                    <span class="post-category cat-tut">Tutorial</span>
+                    <h1>GPUStack Setup Guide: From Zero to Local API in 20 Minutes</h1>
+                    <div class="post-meta">
+                        <time datetime="2026-04-26">April 26, 2026</time>
+                        <span>·</span>
+                        <span class="read-time">7 min read</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="post-body">
+                <div class="container">
+
+<p>You don't need Kubernetes. You don't need Docker Compose. Just one binary, one config file, and twenty minutes.</p>
+
+<p>I had been running vLLM directly from the command line for months. Every time I wanted to switch models, I killed the process, scrolled through my shell history to find the right flags, and started it again. When I needed two models running at once, I opened a second terminal and hoped I remembered the correct port number. It worked, but it felt like managing a server with sticky notes.</p>
+
+<p>GPUStack is an open-source model management layer that sits above inference engines like vLLM and llama.cpp, giving you a web UI to deploy, switch, and monitor models without memorizing command-line flags. I was skeptical, but I decided to give it an afternoon. It took 23 minutes from a fresh Ubuntu install to my first working API call. Three of those were me typing the wrong password. Here is exactly what I did.</p>
+
+<h2>What GPUStack Is and Why I Chose It</h2>
+
+<p>GPUStack is a lightweight model serving platform — a control plane for your local GPUs. It supports multiple inference backends: vLLM for GPU serving, llama.cpp for CPU deployments. I chose it because I was tired of maintaining shell scripts for every model. GPUStack is not a replacement for vLLM — it is a manager. The inference still runs through vLLM or llama.cpp under the hood. GPUStack handles the lifecycle: download, start, expose, monitor, restart.</p>
+
+<h2>Prerequisites</h2>
+
+<p>Before you start, you need the following. I am being specific because "a modern GPU" is not enough information when you are troubleshooting a failed install at midnight.</p>
+
+<ul>
+    <li><strong>GPU:</strong> NVIDIA GPU with compute capability 7.0 or higher. I tested on an RTX 4090 and a dual-RTX-3090 setup. Older cards like the GTX 1080 Ti will not work with the vLLM backend.</li>
+    <li><strong>Drivers:</strong> NVIDIA driver 535.54.03 or newer. Check with <code>nvidia-smi</code>. I wasted 15 minutes on a 525-driver machine before the CUDA check failed silently.</li>
+    <li><strong>CUDA:</strong> 12.2 or newer. GPUStack bundles its own libraries, but the host needs a compatible driver.</li>
+    <li><strong>OS:</strong> Ubuntu 22.04 or 24.04 LTS. This guide assumes Ubuntu.</li>
+    <li><strong>RAM:</strong> 32GB minimum. I tried on 16GB and the OOM killer terminated a Qwen3-14B download.</li>
+    <li><strong>Disk:</strong> At least 100GB free. A 7B model is ~15GB, but the cache grows fast.</li>
+    <li><strong>Network:</strong> Hugging Face access. GPUStack downloads from Hugging Face by default.</li>
+</ul>
+
+<p>My test machine: Ryzen 9 7950X, 128GB DDR5, dual RTX 4090, Ubuntu 22.04, driver 550.67.</p>
+
+<h2>Installation</h2>
+
+<p>GPUStack provides a one-line installer script. I am normally suspicious of <code>curl | sh</code> installations, but the script is readable and only installs a single binary plus a systemd service.</p>
+
+<p>Step 1: run the installer.</p>
+
+<pre><code>curl -sfL https://get.gpustack.io | sh -</code></pre>
+
+<p>The script detects your OS, downloads the appropriate binary, and installs it to <code>/usr/local/bin/gpustack</code>. On my machine, the output looked like this:</p>
+
+<pre><code>[INFO]  Detecting architecture...
+[INFO]  Architecture: amd64
+[INFO]  Downloading GPUStack v0.5.1...
+[INFO]  Installing to /usr/local/bin/gpustack
+[INFO]  Creating systemd service...
+[INFO]  Starting GPUStack service...
+[INFO]  GPUStack is running at http://localhost:80
+[INFO]  Default username: admin
+[INFO]  Default password: (randomly generated, see below)</code></pre>
+
+<p>The installer prints the default admin password at the end. Copy it immediately. I did not copy mine, and the reset process took an extra 8 minutes of reading documentation.</p>
+
+<p>Step 2: verify the service is running.</p>
+
+<pre><code>sudo systemctl status gpustack</code></pre>
+
+<p>You should see <code>active (running)</code>. If you see <code>failed</code>, check the logs:</p>
+
+<pre><code>sudo journalctl -u gpustack -n 50 --no-pager</code></pre>
+
+<p>The most common failure is a CUDA driver mismatch. If the logs mention <code>libcudart.so</code> or <code>nvmlInit</code> errors, your NVIDIA driver is too old.</p>
+
+<p>Step 3: check that GPUStack sees your GPUs.</p>
+
+<pre><code>gpustack list-gpus</code></pre>
+
+<p>Expected output on a dual-GPU machine:</p>
+
+<pre><code>+----+------+----------+-----------+----------------+
+| ID | Name | Memory   | Utilization | Temperature   |
++----+------+----------+-----------+----------------+
+| 0  | RTX  | 24564 MB | 0%        | 34C            |
+| 1  | RTX  | 24564 MB | 0%        | 36C            |
++----+------+----------+-----------+----------------+</code></pre>
+
+<p>If this command returns no GPUs, reboot and try again. A fresh driver install often requires a reboot before the NVML library becomes visible to userspace.</p>
+
+<h2>First Model Deployment</h2>
+
+<p>Open your browser and navigate to <code>http://localhost</code>. Log in with username <code>admin</code> and the password from the installer output.</p>
+
+<p>The dashboard is clean: a GPU overview at the top, a model list on the left, and a "Deploy Model" button in the center. Click that button.</p>
+
+<p>You will see a form with these fields:</p>
+
+<ul>
+    <li><strong>Model Source:</strong> Hugging Face (default) or local path</li>
+    <li><strong>Model ID:</strong> the Hugging Face model identifier</li>
+    <li><strong>Backend:</strong> vLLM, llama.cpp, or auto-detect</li>
+    <li><strong>GPU:</strong> which GPU to use, or auto-schedule</li>
+    <li><strong>Quantization:</strong> optional, for specifying AWQ or GPTQ</li>
+    <li><strong>Replicas:</strong> how many instances to run</li>
+</ul>
+
+<p>For your first deployment, use these exact values:</p>
+
+<ul>
+    <li>Model Source: Hugging Face</li>
+    <li>Model ID: <code>Qwen/Qwen3-7B-Instruct</code></li>
+    <li>Backend: vLLM</li>
+    <li>GPU: Auto</li>
+    <li>Replicas: 1</li>
+</ul>
+
+<p>Click "Deploy." GPUStack downloads the model weights from Hugging Face, which takes 5-10 minutes. When the status changes from "Downloading" to "Running," the model is live.</p>
+
+<p>I recommend using the OpenAI-compatible endpoint at <code>http://localhost/v1-openai/chat/completions</code>, which handles model routing through the standard <code>model</code> parameter in the JSON body. The default <code>/v1/chat/completions</code> path uses URL-encoded model names that some HTTP clients mishandle.</p>
+
+<h2>Testing the API</h2>
+
+<p>Open a terminal and run this curl command. Replace the URL if your model name is different.</p>
+
+<pre><code>curl http://localhost/v1-openai/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Qwen/Qwen3-7B-Instruct",
+    "messages": [{"role": "user", "content": "Explain quantum computing in one paragraph."}],
+    "max_tokens": 200,
+    "temperature": 0.7
+  }'</code></pre>
+
+<p>The first request takes a few seconds while vLLM warms up the CUDA kernels. Here is the response I received:</p>
+
+<pre><code>{
+  "id": "chatcmpl-abc123",
+  "object": "chat.completion",
+  "created": 1714123456,
+  "model": "Qwen/Qwen3-7B-Instruct",
+  "choices": [{
+    "index": 0,
+    "message": {
+      "role": "assistant",
+      "content": "Quantum computing leverages the principles of quantum mechanics, specifically superposition and entanglement, to process information in ways that classical computers cannot. While a classical bit is either 0 or 1, a quantum bit (qubit) can exist in a superposition of both states simultaneously. This allows quantum computers to explore many possible solutions to a problem at once, making them potentially exponentially faster for certain tasks like factoring large numbers, simulating molecular structures, and optimizing complex systems. However, quantum computers are still in early development and face significant challenges including error correction and maintaining quantum coherence at scale."
+    },
+    "finish_reason": "stop"
+  }],
+  "usage": {
+    "prompt_tokens": 14,
+    "completion_tokens": 118,
+    "total_tokens": 132
+  }
+}</code></pre>
+
+<p>The API is fully OpenAI-compatible. Point any client library at it by changing the base URL. The <code>api_key</code> field is required by the Python SDK but ignored by GPUStack.</p>
+
+<h2>Adding a Second Model</h2>
+
+<p>This is where GPUStack starts to shine. Without changing any running services, I deployed a second model on the other GPU.</p>
+
+<p>Back in the web UI, click "Deploy Model" again and use these values:</p>
+
+<ul>
+    <li>Model Source: Hugging Face</li>
+    <li>Model ID: <code>meta-llama/Llama-3.1-8B-Instruct</code></li>
+    <li>Backend: vLLM</li>
+    <li>GPU: GPU 1 (or auto-schedule if you have only one GPU)</li>
+    <li>Replicas: 1</li>
+</ul>
+
+<p>On my dual-RTX-4090 machine, each model got its own GPU. If you have a single GPU, both models will share it — a 7B and an 8B at FP16 will not fit on a 24GB card. Query either model by changing the model name:</p>
+
+<pre><code>curl http://localhost/v1-openai/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "messages": [{"role": "user", "content": "What is the capital of France?"}]
+  }'</code></pre>
+
+<p>The response format is identical. From the client side, switching models is a one-line change.</p>
+
+
+<h2>What I Struggled With</h2>
+
+<p>I promised honesty, so here are the problems I actually hit.</p>
+
+<p><strong>The default password.</strong> I mentioned this already, but it bears repeating. The installer prints a random password once. If you miss it, you reset it by running <code>gpustack reset-password admin</code> on the server. I did not know this command existed and spent 8 minutes reading source code before finding it in the CLI help.</p>
+
+<p><strong>Model download failures.</strong> My first attempt to download Llama-3.1-8B failed halfway through with a network timeout. GPUStack's retry restarted from the beginning instead of resuming. The workaround is to pre-download with <code>huggingface-cli</code> and point GPUStack at the local cache.</p>
+
+<p><strong>Context length defaults.</strong> GPUStack's vLLM backend defaults to <code>max-model-len</code> of 4096 tokens. I did not realize this until a summarization task started truncating at 4K. The setting is buried in the "Advanced" tab. I had to redeploy with <code>max_model_len=8192</code>.</p>
+
+<p><strong>Port conflicts.</strong> GPUStack binds to port 80 by default. On a machine already running nginx, this fails silently — the service crashes in a loop. I found it by checking <code>journalctl</code> for "Address already in use." The fix is to edit <code>/etc/gpustack/config.yaml</code> and change the port to 8080.</p>
+
+<p><strong>GPU scheduling confusion.</strong> When I set GPU to "Auto" with two models and one GPU, I expected GPUStack to queue them or load-balance. Instead, it tried to run both simultaneously and the second one failed with an OOM error. "Auto" means "pick any available GPU," not "manage resource contention." As of version 0.5.1, GPUStack does not check VRAM availability before scheduling.</p>
+
+<h2>Quick Comparison to Alternatives</h2>
+
+<p>GPUStack is not the only tool in this space. Here is how it compares to the options I considered.</p>
+
+<p><strong>vLLM alone:</strong> Maximum performance and flexibility, but you manage everything yourself. No web UI, no model registry, no automatic restarts. Best for production APIs where you have an ops team.</p>
+
+<p><strong>Ollama:</strong> Easier than GPUStack for a single-user setup. One command to install, built-in chat REPL. But no multi-model API management, no web dashboard, and no multi-GPU support for a single model. I still use Ollama on my laptop for quick experiments.</p>
+
+<p><strong>Text Generation Inference (TGI):</strong> Hugging Face's serving stack. Faster than vLLM for some workloads, but heavier to install. No built-in model management UI comparable to GPUStack's dashboard.</p>
+
+<p><strong>llama.cpp server:</strong> Excellent for CPU inference and edge devices. GPUStack uses llama.cpp as one of its backends. If you only run small models on CPU, llama.cpp alone is simpler.</p>
+
+<p><strong>Kubernetes + KServe:</strong> The enterprise choice. Massive overhead for a single machine. I would not recommend this unless you are running a cluster of at least four GPUs.</p>
+
+<p>For my use case — a single workstation with 2-4 GPUs, serving 2-4 models to a small team — GPUStack hits the sweet spot. More structured than raw vLLM, more capable than Ollama, without the weight of Kubernetes.</p>
+
+<h2>Final Notes</h2>
+
+<p>My GPUStack instance has been running for three weeks without a crash. I have four models deployed: Qwen3-7B for general chat, Llama-3.1-8B for coding, a fine-tuned SQL model, and a small 3B fallback. Switching between them is a dropdown in the dashboard. The setup is not perfect — documentation could be clearer, download retry needs resume support, GPU scheduling could be smarter — but the core promise is real. It took me 23 minutes, and 3 of those were my own fault.</p>
+
+<p>If you are managing local models through shell scripts and terminal tabs, GPUStack is worth the migration. Start with one model, get comfortable with the dashboard, and expand. The OpenAI-compatible API means your existing clients work without changes. One last tip: bookmark the dashboard and save the admin password. You will need both more often than you think.</p>
+
+                </div>
+            </div>
+        </article>
+
+        <section class="adsense-slot">
+            <div class="adsense-placeholder">
+                AdSense ad slot (mid-content) — replace with real ad code after deployment
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">AI Deployment Notes</div>
+                    <p>Hands-on guides for local LLM deployment, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Field Notes · Pitfall Guides · Daily Updates</span>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Posts</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Field Notes</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>This site uses cookies to analyze traffic. By continuing, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

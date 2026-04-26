@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to safely expose your local LLM to the internet using Cloudflare Tunnel, basic auth, and rate limiting — without opening ports or risking your network.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="How to Expose Your Local LLM to the Internet Without Getting Pwned">
+    <meta property="og:description" content="I wanted to use my local model from my phone. I did NOT want to wake up to a $5000 cloud bill because someone found my open port.">
+    <meta property="og:url" content="https://local-llm.org/posts/expose-local-llm-safely.html">
+    <meta property="og:locale" content="en_US">
+    <meta property="article:published_time" content="2026-04-26">
+    <meta property="article:section" content="Tutorial">
+    <title>How to Expose Your Local LLM to the Internet Without Getting Pwned — AI Deployment Notes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://local-llm.org/posts/expose-local-llm-safely.html">
+    <meta name="google-adsense-account" content="ca-pub-7451090615788854">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo">
+                <a href="/index.html">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="6" height="6" rx="1" fill="white"/>
+                            <rect x="10" y="2" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="2" y="10" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="10" y="10" width="6" height="6" rx="1" fill="white"/>
+                        </svg>
+                    </span>
+                    AI Deployment Notes
+                </a>
+            </div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/index.html">Home</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Articles</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
+                </ul>
+                <a href="/tools/index.html" class="nav-cta">Open Toolkit</a>
+                <a href="/zh/posts/index.html" class="lang-switch">中文</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="reading-progress" id="readingProgress"></div>
+
+        <section class="post-header">
+            <div class="container">
+                <span class="post-category cat-tut">Tutorial</span>
+                <h1>How to Expose Your Local LLM to the Internet Without Getting Pwned</h1>
+                <div class="post-meta">
+                    <time datetime="2026-04-26">April 26, 2026</time>
+                    <span class="separator">·</span>
+                    <span class="read-time">9 min read</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="post-body">
+            <div class="container">
+
+                <p>I wanted to use my local model from my phone. I did NOT want to wake up to a $5000 cloud bill because someone found my open port.</p>
+
+                <p>This is the guide I wish existed when I started. I will show you the dangerous way first — because understanding why it is dangerous is what makes the safe way stick. Then I will walk through the exact setup I use now: Cloudflare Tunnel, basic auth, rate limiting, and a bedtime checklist that lets me sleep through the night.</p>
+
+                <p>My setup: a home server running vLLM on Ubuntu 22.04, behind a standard residential router. The model I expose is Qwen3-7B-Instruct, running at about 45 tokens per second. I access it from my phone, my laptop at coffee shops, and occasionally from a tablet when I am traveling. The server has been online for four months. Nobody unauthorized has gotten in.</p>
+
+                <h2>Why You Might Want to Do This</h2>
+
+                <p>Local LLMs are great until you leave your house. Then you are stuck choosing between:</p>
+
+                <ul>
+                    <li>Paying for cloud API tokens every time you want to ask a question</li>
+                    <li>Running everything through a VPN back to your home network, which drains your phone battery and adds 200ms of latency</li>
+                    <li>Not having access to your model at all</li>
+                </ul>
+
+                <p>I tried the VPN route first. WireGuard is solid, but on iOS it kept disconnecting when the phone slept. Reconnecting took 3-5 seconds. I wanted something that just worked, like ChatGPT, but pointed at my own hardware.</p>
+
+                <p>The other reason is cost. I already own the GPU. Adding a cloud API subscription on top feels like paying rent on a house I own. The marginal cost of exposing my local model is basically zero. The marginal cost of a mistake could be hundreds of dollars in electricity or, worse, a compromised home network.</p>
+
+                <p>That tradeoff is what this article is about.</p>
+
+                <h2>The Naive Approach: Port Forwarding</h2>
+
+                <p>Here is what I almost did. It is what most tutorials suggest, and it is terrifying.</p>
+
+                <p>I logged into my router admin panel. I found the port forwarding section. I created a rule: external port 8000, internal port 8000, target IP 192.168.1.42 (my server). I checked my public IP on whatismyipaddress.com. I typed <code>http://&lt;my-public-ip&gt;:8000/v1/chat/completions</code> into my phone browser. It worked.</p>
+
+                <p>I felt clever for about 90 seconds. Then I started thinking about what I had actually done.</p>
+
+                <p>My home IP is scanned constantly. Shodan, Censys, and botnets crawl the IPv4 space 24/7 looking for open ports. Port 8000 is a common target because it is the default for development servers and — yes — vLLM's API server. The moment I opened that port, I put a neon sign on my network that says "LLM inference server here, no authentication required."</p>
+
+                <p>Here is what could have happened:</p>
+
+                <ul>
+                    <li>A bot finds my open port within hours</li>
+                    <li>It starts hammering <code>/v1/chat/completions</code> with long prompts and high <code>max_tokens</code></li>
+                    <li>My GPU runs at 100% load 24/7, generating nonsense for a stranger</li>
+                    <li>My electricity bill spikes. My GPU fans scream</li>
+                    <li>Worse: if my vLLM version has a known vulnerability, the attacker gets shell access</li>
+                </ul>
+
+                <p>I did not want to find out if vLLM 0.11.2 has an RCE vulnerability. Port forwarding was off the table.</p>
+
+                <p>What I worried about: botnets, zero-days, crypto miners using my GPU, someone pivoting from my server to my NAS. What actually happened: nothing. Four months of silence, which is exactly what you want from a security setup.</p>
+
+                <h2>The Right Way: Cloudflare Tunnel</h2>
+
+                <p>Cloudflare Tunnel creates an outbound connection from your server to Cloudflare's edge network. No open ports. No public IP exposure. No router configuration. Your server initiates a secure tunnel to Cloudflare, and Cloudflare serves your application through a public hostname with HTTPS and DDoS protection.</p>
+
+                <p>The mental model is inverted: instead of the internet reaching into your network, your network reaches out to the internet. If the tunnel drops, your server is invisible.</p>
+
+                <h3>Step 1: Install cloudflared</h3>
+
+                <p>On your server, run the official install script:</p>
+
+                <pre><code>curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared.deb</code></pre>
+
+                <p>For ARM systems, replace <code>amd64</code> with <code>arm64</code> in the URL.</p>
+
+                <h3>Step 2: Authenticate with Cloudflare</h3>
+
+                <pre><code>cloudflared tunnel login</code></pre>
+
+                <p>This opens a browser window. Log into your Cloudflare account and select the domain you want to use. I use a subdomain like <code>llm.mydomain.com</code>. The command downloads a certificate to <code>~/.cloudflared/cert.pem</code>. Keep this file safe.</p>
+
+                <h3>Step 3: Create and configure the tunnel</h3>
+
+                <pre><code>cloudflared tunnel create local-llm</code></pre>
+
+                <p>This outputs a tunnel UUID. Copy it. Create <code>~/.cloudflared/config.yml</code>:</p>
+
+                <pre><code>tunnel: &lt;YOUR-TUNNEL-UUID&gt;
+credentials-file: /home/&lt;your-user&gt;/.cloudflared/&lt;YOUR-TUNNEL-UUID&gt;.json
+
+ingress:
+  - hostname: llm.yourdomain.com
+    service: http://localhost:8000
+  - service: http_status:404</code></pre>
+
+                <p>The last line is a catch-all that returns 404 for any unmatched hostname. This prevents random scans from probing your tunnel.</p>
+
+                <h3>Step 4: Route DNS</h3>
+
+                <pre><code>cloudflared tunnel route dns local-llm llm.yourdomain.com</code></pre>
+
+                <p>This creates a CNAME record in your Cloudflare DNS automatically.</p>
+
+                <h3>Step 5: Run the tunnel</h3>
+
+                <pre><code>cloudflared tunnel run local-llm</code></pre>
+
+                <p>If everything worked, you can now visit <code>https://llm.yourdomain.com</code> and see your vLLM server responding. The connection is HTTPS by default. Your router still has zero open ports. Your public IP is never exposed.</p>
+
+                <h3>Step 6: Systemd service (so it survives reboots)</h3>
+
+                <p>Running the tunnel manually is fine for testing. For production, make it a service:</p>
+
+                <pre><code>sudo cloudflared service install
+sudo systemctl enable --now cloudflared</code></pre>
+
+                <p>Check status with <code>sudo systemctl status cloudflared</code>. If it shows "active (running)," you are good.</p>
+
+                <p>Cloudflare Tunnel is free for personal use. The free plan includes unlimited tunnels, DDoS protection, and HTTPS. I have never paid Cloudflare a cent for this setup.</p>
+
+                <h2>Adding Basic Authentication</h2>
+
+                <p>Cloudflare Tunnel gives you a public URL with TLS. It does NOT give you authentication. Anyone who guesses your subdomain can still hit your API. You need to add a gate.</p>
+
+                <p>Cloudflare Access is the cleanest solution. It sits in front of your tunnel and enforces identity checks before traffic reaches your server. Here is the setup:</p>
+
+                <ol>
+                    <li>In the Cloudflare dashboard, go to <strong>Access &gt; Applications</strong></li>
+                    <li>Click <strong>Add an application</strong>, choose <strong>Self-hosted</strong></li>
+                    <li>Application name: "Local LLM"</li>
+                    <li>Session duration: 24 hours</li>
+                    <li>Assign a domain: <code>llm.yourdomain.com</code></li>
+                    <li>Under <strong>Policies</strong>, create a policy named "Allow Me"</li>
+                    <li>Action: <strong>Allow</strong></li>
+                    <li>Include rule: <strong>Emails</strong> — add your email address</li>
+                    <li>Save and deploy</li>
+                </ol>
+
+                <p>Now when you visit <code>https://llm.yourdomain.com</code>, Cloudflare shows a login page before forwarding any traffic to your server. If someone finds your URL, they hit a wall. They never touch your vLLM instance.</p>
+
+                <p>Alternative for non-Cloudflare users: put an nginx reverse proxy in front of vLLM and use HTTP basic auth:</p>
+
+                <pre><code>server {
+    listen 8080;
+    location / {
+        auth_basic "LLM API";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+        proxy_pass http://localhost:8000;
+    }
+}</code></pre>
+
+                <p>Create the password file with <code>htpasswd -c /etc/nginx/.htpasswd yourusername</code>, then point Cloudflare Tunnel at <code>http://localhost:8080</code>. This gives you two layers: Cloudflare's edge security and nginx-level basic auth. I ran this for two weeks before switching to Cloudflare Access and found it perfectly adequate.</p>
+
+                <h2>Rate Limiting: Why You Need It</h2>
+
+                <p>Authentication stops casual attackers. It does not stop someone who steals your credentials, or a bug in your client that goes into a request loop, or your own script that forgets to sleep between API calls.</p>
+
+                <p>I learned this the hard way. I wrote a Python script to batch-process notes and forgot to add a <code>time.sleep()</code>. It sent 400 requests in 90 seconds. My GPU thermal-throttled. It took me 20 minutes to realize I was DDoSing myself.</p>
+
+                <p>Rate limiting prevents this. In the Cloudflare dashboard, go to <strong>Security &gt; WAF &gt; Rate limiting rules</strong> and create a rule for your hostname. I configured:</p>
+
+                <ul>
+                    <li>Maximum 10 requests per minute from a single IP</li>
+                    <li>Maximum 100 requests per hour from a single IP</li>
+                    <li>Burst allowance: 3 requests in 10 seconds</li>
+                    <li>Action: block for 10 minutes, then auto-release</li>
+                </ul>
+
+                <p>These thresholds are conservative for personal use. I have never hit them during normal phone usage, but they caught my runaway script within 30 seconds. I also added a custom response body for blocked requests: "Rate limit exceeded. If this is your server, check your client code."</p>
+
+                <h2>Monitoring and Alerting Setup</h2>
+
+                <p>Security is not a one-time configuration. It is a process of noticing when things change. I set up three monitoring layers.</p>
+
+                <h3>Layer 1: Cloudflare Analytics</h3>
+
+                <p>The Cloudflare dashboard shows request volume, error rates, and top countries of origin. I check it once a week for traffic from countries I have never visited, sudden spikes in 4xx errors, or request volume above my normal pattern. In four months, I have seen exactly one anomaly: a burst of 12 requests from Germany. It was me, testing from a VPN node I forgot I had connected.</p>
+
+                <h3>Layer 2: Server Resource Alerts</h3>
+
+                <p>I installed <code>netdata</code> for lightweight monitoring:</p>
+
+                <pre><code>wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh
+sh /tmp/netdata-kickstart.sh --stable-channel</code></pre>
+
+                <p>I configured alerts for GPU temperature above 82C, GPU utilization above 95% for more than 5 minutes, and sustained inbound traffic above 10 MB/s. Netdata sends these to a Discord webhook. I have received exactly two alerts — both were my own batch jobs running hot. Better a false positive than a missed breach.</p>
+
+                <h3>Layer 3: Log Review</h3>
+
+                <p>Once a week, I run this command:</p>
+
+                <pre><code>sudo grep -i "error\|unauthorized\|rate limit" /var/log/cloudflared.log | tail -20</code></pre>
+
+                <p>It takes 10 seconds. In four months, the only errors have been my own mistyped API keys. The log file is small because there is nothing to log. That is the goal.</p>
+
+                <h2>Testing From Outside Your Network</h2>
+
+                <p>Before you rely on this setup, test it properly. Here is my checklist:</p>
+
+                <ol>
+                    <li><strong>Disconnect from WiFi.</strong> Use your phone's cellular connection. Visit <code>https://llm.yourdomain.com</code>. You should see the Cloudflare Access login page, not your vLLM server directly.</li>
+                    <li><strong>Test the API endpoint.</strong> From your phone, run:
+                        <pre><code>curl -X POST https://llm.yourdomain.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{"model": "Qwen3-7B-Instruct", "messages": [{"role": "user", "content": "Hello"}]}'</code></pre>
+                        You should get a JSON response. A 401 means your auth works but the API key is wrong. A 302 redirect means Cloudflare Access is intercepting API requests — configure a service auth bypass for programmatic access.</li>
+                    <li><strong>Verify no direct access.</strong> Try visiting <code>http://your-public-ip:8000</code> from your phone. It should time out. If it responds, your port forwarding rule is still active. Go delete it.</li>
+                    <li><strong>Test rate limiting.</strong> Run a loop of 20 requests as fast as possible. After the burst threshold, you should get 429 responses. Wait 10 minutes and confirm normal access resumes.</li>
+                    <li><strong>Check from a different country.</strong> Use a VPN or ask a friend abroad to visit your URL. They should hit the auth wall just like you do.</li>
+                </ol>
+
+                <p>I did all of these tests on day one. The port forwarding test failed at first — I had forgotten my ISP's modem also had a forwarding rule. Finding and removing it is why my public IP scan now returns nothing.</p>
+
+                <h2>What I Check Before Going to Bed</h2>
+
+                <p>Paranoia sounds exhausting, but it becomes routine. My nightly checklist takes 45 seconds:</p>
+
+                <ol>
+                    <li><strong>Glance at Netdata.</strong> Is GPU utilization at 0%? Good. If it is above 10%, something is running that I forgot about.</li>
+                    <li><strong>Check Cloudflare Analytics for the last 4 hours.</strong> Any traffic while I was asleep? There should not be. I am the only user.</li>
+                    <li><strong>Verify the tunnel is up.</strong> <code>sudo systemctl is-active cloudflared</code> should print "active."</li>
+                    <li><strong>Confirm no new login emails.</strong> Cloudflare Access sends me an email for every successful authentication. If I see one I do not recognize, I know something is wrong.</li>
+                </ol>
+
+                <p>In four months, I have never found a problem during this check. The value is not in catching breaches. The value is in knowing, with confidence, that there is nothing to catch.</p>
+
+                <p>What I worried about: forgetting to check one night and missing an intrusion. What actually happened: the checks became automatic. It is like locking your front door. You do not debate it every night. You just do it.</p>
+
+                <h2>The Bottom Line</h2>
+
+                <p>Exposing a local LLM to the internet is a risk calculation. Port forwarding is fast, free, and dangerous. Cloudflare Tunnel is slightly more work, still free, and dramatically safer. The gap in security is not incremental — it is categorical. An open port is discoverable. A tunnel is not.</p>
+
+                <p>Add authentication so guessing your URL is not enough. Add rate limiting so your own mistakes do not hurt you. Add monitoring so you know when the world changes. Then sleep soundly.</p>
+
+                <p>My total cost: $0 for Cloudflare, $0 for software, about 90 minutes of initial configuration, and 45 seconds per night of maintenance. My benefit: unlimited access to my own model from anywhere, with no API bills and no 3 AM anxiety about open ports.</p>
+
+                <p>If you are currently port forwarding, close it today. Install Cloudflare Tunnel this weekend. The time you spend now could save you weeks of recovery later.</p>
+
+            </div>
+        </section>
+
+        <section class="adsense-slot">
+            <div class="adsense-placeholder">
+                AdSense ad slot (mid-content) — replace with real ad code after deployment
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <span class="footer-logo-mark" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="6" height="6" rx="1" fill="white"/>
+                                <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="1" y="9" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="9" y="9" width="6" height="6" rx="1" fill="white"/>
+                            </svg>
+                        </span>
+                        AI Deployment Notes
+                    </div>
+                    <p>Practical local LLM deployment experience, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Hands-on Notes · Pitfall Guides · Daily Updates</span>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Article Archive</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Deployment Notes</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>This site uses cookies to analyze traffic. By continuing to browse, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>
