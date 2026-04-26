@@ -200,7 +200,7 @@
                         </div>
                         <div class="post-content">
                             <span class="post-category cat-tut">教程</span>
-                            <h3><a href="/zh/posts/vllm-deploy-llm-step-by-step.html">vLLM + Qwen3 完整部署指南：从零到 API 服务</a></h3>
+                            <h3><a href="/zh/posts/docker-vllm-checklist.html">vLLM + Qwen3 完整部署指南：从零到 API 服务</a></h3>
                             <p>一步步教你安装 vLLM、下载模型、配置参数、启动服务，并用 GPUStack 管理多模型。</p>
                             <div class="post-meta">
                                 <time datetime="2026-04-23">2026年04月23日</time>
@@ -215,7 +215,7 @@
                         </div>
                         <div class="post-content">
                             <span class="post-category cat-cmp">对比</span>
-                            <h3><a href="/zh/posts/local-vs-cloud-model.html">本地模型 vs 云端模型：成本、性能、体验全面对比</a></h3>
+                            <h3><a href="/zh/posts/cloud-to-local-cost-breakdown.html">本地模型 vs 云端模型：成本、性能、体验全面对比</a></h3>
                             <p>基于 6 个月实测数据，从每千 token 成本、响应延迟、隐私控制等维度给出选型建议。</p>
                             <div class="post-meta">
                                 <time datetime="2026-04-23">2026年04月23日</time>
@@ -230,7 +230,7 @@
                         </div>
                         <div class="post-content">
                             <span class="post-category cat-bug">踩坑</span>
-                            <h3><a href="/zh/posts/qwen-context-overflow-fix.html">Qwen 上下文爆满问题解决方案</a></h3>
+                            <h3><a href="/zh/posts/vllm-oom-debug-log.html">Qwen 上下文爆满问题解决方案</a></h3>
                             <p>vLLM 部署 Qwen 时 context overflow 导致 API 500 的排查过程与三步修复方案。</p>
                             <div class="post-meta">
                                 <time datetime="2026-04-23">2026年04月23日</time>
@@ -287,19 +287,19 @@
                     </details>
                     <details class="faq-item">
                         <summary>vLLM 和 Ollama 有什么区别？</summary>
-                        <p>vLLM 是生产级推理引擎，支持高并发、连续批处理、PagedAttention，适合 API 服务场景。Ollama 是开发者体验优先的本地沙盒，安装简单、命令直观，适合个人实验。一句话：要跑服务选 vLLM，要快速尝鲜选 Ollama。更详细的对比可以看<a href="/zh/posts/vllm-vs-ollama-comparison.html">这篇深度对比</a>。</p>
+                        <p>vLLM 是生产级推理引擎，支持高并发、连续批处理、PagedAttention，适合 API 服务场景。Ollama 是开发者体验优先的本地沙盒，安装简单、命令直观，适合个人实验。一句话：要跑服务选 vLLM，要快速尝鲜选 Ollama。更详细的对比可以看<a href="/zh/posts/vllm-vs-ollama-3months.html">这篇深度对比</a>。</p>
                     </details>
                     <details class="faq-item">
                         <summary>显存不足怎么办？</summary>
-                        <p>五个降显存手段：① 用 AWQ/GPTQ 4bit 量化模型（省 50-60% 显存）；② 减小 max-model-len（如从 8192 降到 4096）；③ 开启 FlashAttention-2（省 10-15%）；④ 降低 gpu-memory-utilization（如从 0.9 降到 0.8）；⑤ 用多卡张量并行（tensor-parallel-size）。详细步骤参考<a href="/zh/posts/gpu-oom-optimization.html">GPU 显存优化实战</a>。</p>
+                        <p>五个降显存手段：① 用 AWQ/GPTQ 4bit 量化模型（省 50-60% 显存）；② 减小 max-model-len（如从 8192 降到 4096）；③ 开启 FlashAttention-2（省 10-15%）；④ 降低 gpu-memory-utilization（如从 0.9 降到 0.8）；⑤ 用多卡张量并行（tensor-parallel-size）。详细步骤参考<a href="/zh/posts/vllm-oom-debug-log.html">GPU 显存优化实战</a>。</p>
                     </details>
                     <details class="faq-item">
                         <summary>没有公网 IP 怎么让外网访问本地模型？</summary>
-                        <p>推荐 Cloudflare Tunnel（免费、安全、带 HTTPS）。不需要公网 IP、不改路由器、不暴露端口。我写了一篇完整教程<a href="/zh/posts/cloudflare-tunnel-local-ai.html">在这里</a>。替代方案包括 frp、ngrok、花生壳等，但 Cloudflare Tunnel 在稳定性和安全性上更优。</p>
+                        <p>推荐 Cloudflare Tunnel（免费、安全、带 HTTPS）。不需要公网 IP、不改路由器、不暴露端口。我写了一篇完整教程<a href="/zh/posts/expose-local-llm-safely.html">在这里</a>。替代方案包括 frp、ngrok、花生壳等，但 Cloudflare Tunnel 在稳定性和安全性上更优。</p>
                     </details>
                     <details class="faq-item">
                         <summary>自建本地模型比买 API 便宜吗？</summary>
-                        <p>取决于使用量。我算过一笔账：自建双卡 RTX 4090 服务器一次性投入约 3.5 万，但按每天 5000 次请求算，比调用 OpenAI API 每月省 2000-3000 元，一年回本。如果每月请求少于 10 万次，买 API 更划算。详细对比看<a href="/zh/posts/local-vs-cloud-model.html">本地 vs 云端全面对比</a>。</p>
+                        <p>取决于使用量。我算过一笔账：自建双卡 RTX 4090 服务器一次性投入约 3.5 万，但按每天 5000 次请求算，比调用 OpenAI API 每月省 2000-3000 元，一年回本。如果每月请求少于 10 万次，买 API 更划算。详细对比看<a href="/zh/posts/cloud-to-local-cost-breakdown.html">本地 vs 云端全面对比</a>。</p>
                     </details>
                 </div>
                 <div class="faq-more">

@@ -95,12 +95,12 @@
 
                     <div class="faq-item">
                         <h3>What's the difference between vLLM and Ollama?</h3>
-                        <p>vLLM is a production-grade inference engine with high concurrency, continuous batching, and PagedAttention — ideal for API serving. Ollama prioritizes developer experience with simple installation and intuitive commands, great for personal experimentation. In short: choose vLLM for services, Ollama for quick trials. See our <a href="/posts/vllm-vs-ollama-comparison.html">detailed comparison</a> for more.</p>
+                        <p>vLLM is a production-grade inference engine with high concurrency, continuous batching, and PagedAttention — ideal for API serving. Ollama prioritizes developer experience with simple installation and intuitive commands, great for personal experimentation. In short: choose vLLM for services, Ollama for quick trials. See our <a href="/posts/vllm-vs-ollama-3months.html">detailed comparison</a> for more.</p>
                     </div>
 
                     <div class="faq-item">
                         <h3>What if I run out of VRAM?</h3>
-                        <p>Five ways to reduce memory usage: 1) Use AWQ/GPTQ 4-bit quantized models (saves 50-60% VRAM); 2) Reduce max-model-len (e.g., from 8192 to 4096); 3) Enable FlashAttention-2 (saves 10-15%); 4) Lower gpu-memory-utilization (e.g., from 0.9 to 0.8); 5) Use multi-GPU tensor parallelism. Check our <a href="/posts/gpu-oom-optimization.html">GPU memory optimization guide</a> for step-by-step instructions.</p>
+                        <p>Five ways to reduce memory usage: 1) Use AWQ/GPTQ 4-bit quantized models (saves 50-60% VRAM); 2) Reduce max-model-len (e.g., from 8192 to 4096); 3) Enable FlashAttention-2 (saves 10-15%); 4) Lower gpu-memory-utilization (e.g., from 0.9 to 0.8); 5) Use multi-GPU tensor parallelism. Check our <a href="/posts/vllm-oom-debug-log.html">GPU memory optimization guide</a> for step-by-step instructions.</p>
                     </div>
 
                     <div class="faq-item">
@@ -112,7 +112,7 @@
 
                     <div class="faq-item">
                         <h3>How can I access my local model from outside without a public IP?</h3>
-                        <p>Cloudflare Tunnel is recommended — it's free, secure, and provides HTTPS. No public IP, router changes, or exposed ports needed. Check our full tutorial <a href="/posts/cloudflare-tunnel-local-ai.html">here</a>. Alternatives include frp, ngrok, and Peanut Shell, but Cloudflare Tunnel wins on stability and security.</p>
+                        <p>Cloudflare Tunnel is recommended — it's free, secure, and provides HTTPS. No public IP, router changes, or exposed ports needed. Check our full tutorial <a href="/posts/expose-local-llm-safely.html">here</a>. Alternatives include frp, ngrok, and Peanut Shell, but Cloudflare Tunnel wins on stability and security.</p>
                     </div>
 
                     <div class="faq-item">
@@ -124,7 +124,7 @@
 
                     <div class="faq-item">
                         <h3>Is self-hosting cheaper than API services?</h3>
-                        <p>It depends on usage. My calculation: a dual RTX 4090 server costs about 35,000 upfront, but at 5,000 requests/day it saves 2,000-3,000 per month compared to OpenAI API, paying for itself in about a year. If you make fewer than 100,000 requests monthly, APIs are more cost-effective. See our <a href="/posts/local-vs-cloud-model.html">local vs. cloud comparison</a> for full details.</p>
+                        <p>It depends on usage. My calculation: a dual RTX 4090 server costs about 35,000 upfront, but at 5,000 requests/day it saves 2,000-3,000 per month compared to OpenAI API, paying for itself in about a year. If you make fewer than 100,000 requests monthly, APIs are more cost-effective. See our <a href="/posts/cloud-to-local-cost-breakdown.html">local vs. cloud comparison</a> for full details.</p>
                     </div>
 
                     <div class="faq-item">

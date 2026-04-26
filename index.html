@@ -200,7 +200,7 @@
                         </div>
                         <div class="post-content">
                             <span class="post-category cat-tut">Tutorial</span>
-                            <h3><a href="/posts/vllm-deploy-llm-step-by-step.html">vLLM + Qwen3 Complete Deployment Guide: From Zero to API Service</a></h3>
+                            <h3><a href="/posts/docker-vllm-checklist.html">vLLM + Qwen3 Complete Deployment Guide: From Zero to API Service</a></h3>
                             <p>A step-by-step guide to installing vLLM, downloading models, configuring parameters, launching services, and managing multiple models with GPUStack.</p>
                             <div class="post-meta">
                                 <time datetime="2026-04-23">April 23, 2026</time>
@@ -215,7 +215,7 @@
                         </div>
                         <div class="post-content">
                             <span class="post-category cat-cmp">Comparison</span>
-                            <h3><a href="/posts/local-vs-cloud-model.html">Local vs Cloud Models: A Full Cost, Performance, and Experience Comparison</a></h3>
+                            <h3><a href="/posts/cloud-to-local-cost-breakdown.html">Local vs Cloud Models: A Full Cost, Performance, and Experience Comparison</a></h3>
                             <p>Based on 6 months of real-world data, we compare per-1K-token costs, response latency, and privacy controls to help you choose.</p>
                             <div class="post-meta">
                                 <time datetime="2026-04-23">April 23, 2026</time>
@@ -230,7 +230,7 @@
                         </div>
                         <div class="post-content">
                             <span class="post-category cat-bug">Troubleshooting</span>
-                            <h3><a href="/posts/qwen-context-overflow-fix.html">Fixing Qwen Context Overflow Issues</a></h3>
+                            <h3><a href="/posts/vllm-oom-debug-log.html">Fixing Qwen Context Overflow Issues</a></h3>
                             <p>A deep dive into diagnosing and fixing vLLM context overflow errors when deploying Qwen, with a three-step recovery plan.</p>
                             <div class="post-meta">
                                 <time datetime="2026-04-23">April 23, 2026</time>
@@ -287,19 +287,19 @@
                     </details>
                     <details class="faq-item">
                         <summary>What's the difference between vLLM and Ollama?</summary>
-                        <p>vLLM is a production-grade inference engine with high concurrency, continuous batching, and PagedAttention—ideal for API service scenarios. Ollama prioritizes developer experience with simple installation and intuitive commands, perfect for personal experimentation. In short: choose vLLM for services, Ollama for quick trials. For a detailed comparison, see <a href="/posts/vllm-vs-ollama-comparison.html">this in-depth comparison</a>.</p>
+                        <p>vLLM is a production-grade inference engine with high concurrency, continuous batching, and PagedAttention—ideal for API service scenarios. Ollama prioritizes developer experience with simple installation and intuitive commands, perfect for personal experimentation. In short: choose vLLM for services, Ollama for quick trials. For a detailed comparison, see <a href="/posts/vllm-vs-ollama-3months.html">this in-depth comparison</a>.</p>
                     </details>
                     <details class="faq-item">
                         <summary>What if I run out of VRAM?</summary>
-                        <p>Five ways to reduce VRAM usage: ① Use AWQ/GPTQ 4-bit quantized models (saves 50-60% VRAM); ② Reduce max-model-len (e.g., from 8192 to 4096); ③ Enable FlashAttention-2 (saves 10-15%); ④ Lower gpu-memory-utilization (e.g., from 0.9 to 0.8); ⑤ Use multi-GPU tensor parallelism (tensor-parallel-size). For detailed steps, see <a href="/posts/gpu-oom-optimization.html">GPU VRAM Optimization Guide</a>.</p>
+                        <p>Five ways to reduce VRAM usage: ① Use AWQ/GPTQ 4-bit quantized models (saves 50-60% VRAM); ② Reduce max-model-len (e.g., from 8192 to 4096); ③ Enable FlashAttention-2 (saves 10-15%); ④ Lower gpu-memory-utilization (e.g., from 0.9 to 0.8); ⑤ Use multi-GPU tensor parallelism (tensor-parallel-size). For detailed steps, see <a href="/posts/vllm-oom-debug-log.html">GPU VRAM Optimization Guide</a>.</p>
                     </details>
                     <details class="faq-item">
                         <summary>How can I access my local model from the internet without a public IP?</summary>
-                        <p>We recommend Cloudflare Tunnel (free, secure, with HTTPS). No public IP needed, no router changes, no port exposure. I wrote a complete tutorial <a href="/posts/cloudflare-tunnel-local-ai.html">here</a>. Alternatives include frp, ngrok, and Peanut Shell, but Cloudflare Tunnel wins on stability and security.</p>
+                        <p>We recommend Cloudflare Tunnel (free, secure, with HTTPS). No public IP needed, no router changes, no port exposure. I wrote a complete tutorial <a href="/posts/expose-local-llm-safely.html">here</a>. Alternatives include frp, ngrok, and Peanut Shell, but Cloudflare Tunnel wins on stability and security.</p>
                     </details>
                     <details class="faq-item">
                         <summary>Is self-hosting cheaper than buying API access?</summary>
-                        <p>It depends on usage. My calculation: a dual RTX 4090 server costs about 35,000 upfront, but at 5,000 requests/day, it saves 2,000-3,000 per month compared to OpenAI API—payback in one year. If you make fewer than 100K requests/month, API is more cost-effective. See the full comparison at <a href="/posts/local-vs-cloud-model.html">Local vs Cloud: Full Comparison</a>.</p>
+                        <p>It depends on usage. My calculation: a dual RTX 4090 server costs about 35,000 upfront, but at 5,000 requests/day, it saves 2,000-3,000 per month compared to OpenAI API—payback in one year. If you make fewer than 100K requests/month, API is more cost-effective. See the full comparison at <a href="/posts/cloud-to-local-cost-breakdown.html">Local vs Cloud: Full Comparison</a>.</p>
                     </details>
                 </div>
                 <div class="faq-more">
