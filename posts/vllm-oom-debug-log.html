@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A real vLLM OOM debugging session. No stack trace, just a silent 'Killed' message. Here's how I read the logs like a detective and found the actual problem.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Fixing vLLM OOM Errors: Reading the Logs Like a Detective">
+    <meta property="og:description" content="A real vLLM OOM debugging session. No stack trace, just a silent 'Killed' message. Here's how I read the logs like a detective and found the actual problem.">
+    <meta property="og:url" content="https://local-llm.org/posts/vllm-oom-debug-log.html">
+    <meta property="og:locale" content="en_US">
+    <meta property="article:published_time" content="2026-04-26">
+    <meta property="article:section" content="Field Notes">
+    <title>Fixing vLLM OOM Errors: Reading the Logs Like a Detective — AI Deployment Notes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://local-llm.org/posts/vllm-oom-debug-log.html">
+    <meta name="google-adsense-account" content="ca-pub-7451090615788854">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="logo"><a href="/index.html">AI Deployment Notes</a></div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/index.html">Home</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Posts</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="lang-switcher">
+                <a href="/zh/posts/index.html" class="lang-link" aria-label="Switch to Chinese">中文</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <article class="post-single">
+            <div class="post-header">
+                <div class="container">
+                    <span class="post-category">Field Notes</span>
+                    <h1>Fixing vLLM OOM Errors: Reading the Logs Like a Detective</h1>
+                    <div class="post-meta">
+                        <time datetime="2026-04-26">April 26, 2026</time>
+                        <span class="sep">·</span>
+                        <span class="read-time">7 min read</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-body">
+                <div class="container">
+                    <p>It was 11:47 PM on a Thursday. I had been trying to get vLLM to serve Qwen3-32B-Instruct for three hours, and the process kept dying with one word: <code>Killed</code>. No Python traceback. No CUDA error. No friendly message saying "hey, you ran out of memory." Just that single word, and then silence.</p>
+
+                    <p>I was tired. I was annoyed. And I was about to learn that debugging OOM errors is less about reading error messages and more about reading the absence of them.</p>
+
+                    <h2>The Crime Scene</h2>
+
+                    <p>Here is what I saw in my terminal at 23:47:12:</p>
+
+<pre><code>$ python -m vllm.entrypoints.openai.api_server \
+    --model Qwen/Qwen3-32B-Instruct \
+    --tensor-parallel-size 2 \
+    --max-model-len 32768 \
+    --gpu-memory-utilization 0.92
+
+INFO 04-23 23:45:33 [config.py:576] Using fp16 data type.
+INFO 04-23 23:45:34 [parallel_state.py:947] Initializing tensor model parallel with size 2
+INFO 04-23 23:45:35 [weight_utils.py:243] Using model weights format ['*.safetensors']
+INFO 04-23 23:45:36 [loader.py:402] Loading weights onto GPU. This may take a few minutes...
+Killed</code></pre>
+
+                    <p>That was it. The entire output. After two minutes of hopeful waiting, watching the weight loading progress bar climb, the process vanished. My dual RTX 4090 setup — 48GB of VRAM total, 128GB of system RAM — had just murdered my inference server without explanation.</p>
+
+                    <p>I stared at the screen. I checked <code>nvidia-smi</code>. Both GPUs showed zero memory usage. The model had not even finished loading. Something killed it mid-allocation, and Python had no idea what happened.</p>
+
+                    <h2>Wrong Guess #1: CUDA Version Mismatch</h2>
+
+                    <p>My first theory was a CUDA toolkit mismatch — the classic vLLM gotcha. PyTorch compiled for CUDA 12.1 running on 11.8 drivers causes silent crashes. It fit the pattern.</p>
+
+                    <p>At 23:52, I ran diagnostics:</p>
+
+<pre><code>$ nvcc --version
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2024 NVIDIA Corporation
+Built on Thu_Mar_28_02:18:24_PDT_2024
+Cuda compilation tools, release 12.4, V12.4.131
+
+$ nvidia-smi | grep "CUDA Version"
+| NVIDIA-SMI 550.67                 Driver Version: 550.67       CUDA Version: 12.4 |
+
+$ python -c "import torch; print(torch.version.cuda)"
+12.4
+
+$ python -c "import torch; print(torch.cuda.is_available())"
+True</code></pre>
+
+                    <p>Everything matched. CUDA 12.4 across the board. PyTorch saw the GPUs. I even ran a quick sanity check — allocated a 10GB tensor, did a matmul. It worked fine. The CUDA theory was dead.</p>
+
+                    <p>It was midnight. I wanted a simple fix, and I didn't have one.</p>
+
+                    <h2>Wrong Guess #2: Corrupt Model Weights</h2>
+
+                    <p>At 00:15, I pivoted. Maybe the model download was corrupt. My internet had hiccuped twice during the Hugging Face pull. What if a safetensors shard had silent corruption that only triggered during GPU transfer?</p>
+
+                    <p>I checked file hashes. They matched. I loaded the model on CPU with a minimal Transformers script — it worked fine, all 65GB of it. The weights were intact.</p>
+
+                    <p>Two wrong guesses. It was 00:42. I had work in the morning, and my server was still dead.</p>
+
+                    <h2>The Breakthrough: Checking dmesg</h2>
+
+                    <p>At 00:47, I remembered something from a Linux administration course I took years ago. When a process gets killed by the kernel with no explanation, the explanation is usually in the kernel ring buffer. Not in the application logs. Not in stderr. In the kernel's own memory.</p>
+
+                    <p>I typed:</p>
+
+<pre><code>$ sudo dmesg | tail -20
+[Thu Apr 23 23:47:12 2026] python invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0
+[Thu Apr 23 23:47:12 2026] CPU: 8 PID: 28471 Comm: python Not tainted 6.5.0-35-generic #35~22.04.1-Ubuntu
+[Thu Apr 23 23:47:12 2026] Hardware name: ASUS System Product Name/PRIME Z790-P, BIOS 2202 01/17/2025
+[Thu Apr 23 23:47:12 2026] Call trace:
+[Thu Apr 23 23:47:12 2026]  dump_backtrace+0x4a/0x5f
+[Thu Apr 23 23:47:12 2026]  show_stack+0x1f/0x30
+[Thu Apr 23 23:47:12 2026]  dump_stack_lvl+0x4a/0x63
+[Thu Apr 23 23:47:12 2026]  dump_stack+0x10/0x16
+[Thu Apr 23 23:47:12 2026]  dump_header+0x4a/0x230
+[Thu Apr 23 23:47:12 2026]  oom_kill_process+0x10b/0x140
+[Thu Apr 23 23:47:12 2026]  out_of_memory+0x106/0x2e0
+[Thu Apr 23 23:47:12 2026] Memory cgroup out of memory: Killed process 28471 (python) total-vm:142341124kB, anon-rss:128923312kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:256312kB oom_score_adj:0</code></pre>
+
+                    <p>There it was. The OOM killer. At exactly 23:47:12 — the same second my terminal printed "Killed" — the Linux kernel had decided my Python process was using too much memory and terminated it.</p>
+
+                    <p>But here is the part that confused me: the log said <code>anon-rss:128923312kB</code>. That is 123GB of anonymous memory. My machine has 128GB of RAM. The process was eating system RAM, not VRAM. I had been watching <code>nvidia-smi</code> this whole time, assuming the problem was GPU memory. The GPUs were not even the bottleneck.</p>
+
+                    <p>I felt simultaneously relieved and stupid. Relieved because I finally knew what was happening. Stupid because I had been looking at the wrong metric for three hours.</p>
+
+                    <h2>The Actual Log Line That Mattered</h2>
+
+                    <p>I went back to the vLLM startup output. I had been so focused on the "Killed" at the end that I missed the actual clue earlier in the logs. I reran the command with <code>--verbose</code> and watched more carefully:</p>
+
+<pre><code>INFO 04-23 23:45:35 [loader.py:402] Loading weights onto GPU. This may take a few minutes...
+INFO 04-23 23:45:35 [loader.py:403] Total shards: 17
+INFO 04-23 23:45:36 [loader.py:410] Loading shard 1/17 to CPU buffer...
+INFO 04-23 23:45:38 [loader.py:410] Loading shard 2/17 to CPU buffer...
+INFO 04-23 23:45:40 [loader.py:410] Loading shard 3/17 to CPU buffer...
+...
+INFO 04-23 23:46:55 [loader.py:410] Loading shard 17/17 to CPU buffer...
+INFO 04-23 23:46:56 [loader.py:415] Transferring weights to GPU 0...
+INFO 04-23 23:47:01 [loader.py:415] Transferring weights to GPU 1...
+Killed</code></pre>
+
+                    <p>vLLM was loading all 17 model shards into CPU memory first — as a staging buffer — before transferring them to the GPUs. The model is 65GB of weights at FP16. With tensor parallelism across two GPUs, vLLM loads the full weights into system RAM, then splits them during transfer. But it was not just 65GB. The loader creates additional CPU-side buffers during the transfer process. My 128GB of RAM was getting eaten by the staging area, plus the OS, plus the desktop environment, plus the dozen browser tabs I had open.</p>
+
+                    <p>The log line that mattered was not the "Killed" at the end. It was the sequence of "Loading shard X/17 to CPU buffer" that I had scrolled past without thinking. The model was too big to stage in RAM with my current workload.</p>
+
+                    <h2>The Fix</h2>
+
+                    <p>At 01:03, I tried a memory-mapped loader flag I had read about in a GitHub issue. It still failed. Same OOM. I was getting desperate.</p>
+
+                    <p>Then I remembered something else: vLLM pre-allocates GPU memory aggressively based on <code>gpu-memory-utilization</code>. I had it at 0.92. What if the CPU-side staging buffers were proportional to that reservation? I tried dropping it to 0.88:</p>
+
+<pre><code>$ python -m vllm.entrypoints.openai.api_server \
+    --model Qwen/Qwen3-32B-Instruct \
+    --tensor-parallel-size 2 \
+    --max-model-len 32768 \
+    --gpu-memory-utilization 0.88</code></pre>
+
+                    <p>It loaded. But I was not satisfied — maybe it was a fluke. I killed the process and ran it again at 01:22 to confirm:</p>
+
+<pre><code>$ python -m vllm.entrypoints.openai.api_server \
+    --model Qwen/Qwen3-32B-Instruct \
+    --tensor-parallel-size 2 \
+    --max-model-len 32768 \
+    --gpu-memory-utilization 0.88</code></pre>
+
+                    <p>It loaded successfully. The server started. I sent a test request:</p>
+
+<pre><code>$ curl http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Qwen/Qwen3-32B-Instruct",
+    "messages": [{"role": "user", "content": "Hello, are you working?"}],
+    "max_tokens": 50
+  }'
+
+{"choices":[{"message":{"role":"assistant","content":"Yes, I'm here and operational. How can I help you today?"}}]}</code></pre>
+
+                    <p>It worked. The fix was simply lowering <code>gpu-memory-utilization</code> from 0.92 to 0.88.</p>
+
+                    <p>Here is why: vLLM pre-allocates GPU memory based on <code>gpu-memory-utilization</code>. At 0.92 on two RTX 4090s, it reserved about 44GB of VRAM. But the weight loader also allocates CPU-side staging buffers proportional to that reservation. At 0.92, the staging buffers pushed my 128GB of system RAM over the edge. At 0.88, they peaked at 112GB and stabilized.</p>
+
+                    <h2>What I Now Check First</h2>
+
+                    <p>This three-hour debugging session taught me a workflow. Now, whenever I see a silent "Killed" with vLLM, I run through this checklist in order:</p>
+
+                    <p><strong>Step 1: Check dmesg immediately.</strong> Do not guess. Do not Google. Run <code>sudo dmesg | grep -i "killed process"</code> and see if the OOM killer was involved. If you see <code>oom_kill_process</code>, you have your answer.</p>
+
+                    <p><strong>Step 2: Look at the RSS.</strong> The dmesg output tells you exactly how much memory the process was using. In my case, <code>anon-rss:128923312kB</code> meant 123GB of system RAM. If the RSS is close to your physical limit, the fix is memory reduction, not driver updates.</p>
+
+                    <p><strong>Step 3: Watch system RAM during loading.</strong> Open <code>htop</code> in a second terminal while vLLM starts. If system RAM climbs and hits your physical limit before the model finishes loading, you have a CPU-side staging buffer problem. This is common with large models on machines where RAM is tight relative to VRAM.</p>
+
+                    <p><strong>Step 4: Reduce gpu-memory-utilization.</strong> I used to set this to 0.95 by default, thinking "use as much VRAM as possible." That is the wrong mindset. vLLM needs headroom for temporary allocations. I now start at 0.85 and only increase it after verifying stable operation.</p>
+
+                    <p><strong>Step 5: Check max-model-len.</strong> A 32768 context window sounds nice, but the KV cache reservation is enormous. For Qwen3-32B, the KV cache at 32K context and batch size 1 is roughly 16GB. At batch size 4, it is 64GB — more than one of my GPUs. I now set <code>max-model-len</code> based on actual use cases, not theoretical maximums.</p>
+
+                    <h2>The Real Lesson</h2>
+
+                    <p>The most frustrating bugs are the ones that give you no information. A stack trace is a gift. An error message is a clue. "Killed" is nothing — it is the absence of information, and it forces you to become a detective.</p>
+
+                    <p>I spent three hours on this problem. Two wrong guesses. One breakthrough at 00:47 when I remembered dmesg existed. The actual fix took thirty seconds to implement. The remaining time was verification and understanding why it worked.</p>
+
+                    <p>If you take one thing from this article, let it be this: when a process dies silently on Linux, the kernel knows why. The kernel always knows why. You just have to know where to ask. <code>dmesg</code> is where the truth lives. Everything else is speculation.</p>
+
+                    <p>I finished at 01:45. The server was running. I had a working Qwen3-32B endpoint. And I had a new habit: every time I see "Killed," I check dmesg first. No exceptions.</p>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">AI Deployment Notes</div>
+                    <p>Hands-on guides for local LLM deployment, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Field Notes · Pitfall Guides · Daily Updates</span>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Posts</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Field Notes</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>This site uses cookies to analyze traffic. By continuing, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

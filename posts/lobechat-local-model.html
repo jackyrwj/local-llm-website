@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The real guide to connecting LobeChat to your local LLM. Exact settings, CORS fixes, model name mapping tricks, and the three failures that waste the most time.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Connecting LobeChat to Your Local Model: The Missing Manual — AI Deployment Notes">
+    <meta property="og:description" content="The docs say 'just set the API URL.' They don't mention the CORS nightmare. Here's the exact configuration that actually works.">
+    <meta property="og:url" content="https://local-llm.org/posts/lobechat-local-model.html">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>Connecting LobeChat to Your Local Model: The Missing Manual — AI Deployment Notes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://local-llm.org/posts/lobechat-local-model.html">
+    <meta name="google-adsense-account" content="ca-pub-7451090615788854">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "Connecting LobeChat to Your Local Model: The Missing Manual",
+      "description": "The real guide to connecting LobeChat to your local LLM. Exact settings, CORS fixes, model name mapping tricks, and the three failures that waste the most time.",
+      "datePublished": "2026-04-26",
+      "author": {"@type": "Organization", "name": "AI Deployment Notes"},
+      "publisher": {"@type": "Organization", "name": "AI Deployment Notes"},
+      "articleSection": "Tutorial",
+      "inLanguage": "en"
+    }
+    </script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo"><a href="/index.html">AI Deployment Notes</a></div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/index.html">Home</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Posts</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="lang-switcher">
+                <a href="/zh/posts/index.html" class="lang-link" aria-label="Switch to Chinese">中文</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <article>
+            <header class="post-header">
+                <div class="container">
+                    <span class="post-category cat-tut">Tutorial</span>
+                    <h1>Connecting LobeChat to Your Local Model: The Missing Manual</h1>
+                    <div class="post-meta">
+                        <time datetime="2026-04-26">April 26, 2026</time>
+                        <span>·</span>
+                        <span class="read-time">6 min read</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="post-body">
+                <div class="container">
+
+<p>The docs say "just set the API URL." They don't mention the CORS nightmare. They don't mention that the model name you type in LobeChat has nothing to do with the model name your API serves. They don't mention that the Docker one-liner works on localhost and breaks on every other machine in your house.</p>
+
+<p>I spent two hours on a Sunday afternoon getting LobeChat to talk to my vLLM instance. Two hours for what should have been a five-minute configuration. The problem was not LobeChat — the problem was that every guide I found skipped the parts that actually break. This is the guide I wish I had.</p>
+
+<p>My setup: LobeChat running in Docker on a home server, vLLM serving Qwen3-7B-Instruct on the same machine at port 8000. The principles here apply to GPUStack, Ollama, or any other OpenAI-compatible backend.</p>
+
+<h2>What Is LobeChat and Why I Use It</h2>
+
+<p>LobeChat is an open-source chat UI that looks and feels like ChatGPT but connects to any LLM backend you want — OpenAI, Anthropic, local APIs, or all of them at once. It supports plugins, multi-model conversations, file uploads, and a plugin ecosystem that includes web search and image generation. The interface is polished. The mobile view works. The conversation history syncs across devices if you configure PostgreSQL.</p>
+
+<p>I use it because I got tired of switching between five different tools. When I need to test a prompt against Qwen3-7B, I open LobeChat. When I need to compare that output against GPT-4o, I switch models in the same thread. When I want to share a conversation with a colleague, I export it as Markdown. It is the closest thing to a universal chat client for LLMs, and it is free.</p>
+
+<p>The catch: connecting it to a local model is not the "paste the URL and go" experience the README implies. The UI is smooth. The backend configuration is where the friction lives.</p>
+
+<h2>Starting Your Local API</h2>
+
+<p>Before you touch LobeChat, make sure your inference server is running and responding. I will show vLLM and GPUStack examples. If you use Ollama, the URL format is different but the CORS and model-name problems are identical.</p>
+
+<p><strong>vLLM:</strong></p>
+
+<pre><code>python -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen3-7B-Instruct \
+  --port 8000 \
+  --host 0.0.0.0 \
+  --max-model-len 8192 \
+  --gpu-memory-utilization 0.85</code></pre>
+
+<p>The <code>--host 0.0.0.0</code> is critical. vLLM defaults to <code>127.0.0.1</code>, which means it only accepts connections from the same machine. If LobeChat is running in Docker, those requests come from the Docker bridge network, not localhost. Without <code>0.0.0.0</code>, every connection times out and you will waste 20 minutes checking firewall rules that are not the problem.</p>
+
+<p><strong>GPUStack:</strong></p>
+
+<p>If you followed my GPUStack guide, your API is already running at <code>http://your-server-ip/v1-openai/chat/completions</code>. The model name is whatever you set during deployment — usually the Hugging Face model ID.</p>
+
+<p>Test your API with curl before opening LobeChat:</p>
+
+<pre><code>curl http://192.168.1.50:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Qwen/Qwen3-7B-Instruct",
+    "messages": [{"role": "user", "content": "Say hello"}]
+  }'</code></pre>
+
+<p>If this returns a valid JSON response, your API works. If it returns "connection refused," check the <code>--host</code> flag. If it hangs, check your firewall. Do not proceed to LobeChat until this curl succeeds.</p>
+
+<h2>Installing LobeChat</h2>
+
+<p>The Docker one-liner from the official docs:</p>
+
+<pre><code>docker run -d -p 3210:3210 \
+  --name lobechat \
+  lobehub/lobe-chat:latest</code></pre>
+
+<p>This works for a quick test. It does not persist your settings, conversations, or API keys across restarts. For a real setup, use Docker Compose with a volume mount:</p>
+
+<pre><code>version: '3.8'
+services:
+  lobechat:
+    image: lobehub/lobe-chat:latest
+    ports:
+      - "3210:3210"
+    environment:
+      - ACCESS_CODE=your-admin-password
+    volumes:
+      - ./lobe-data:/app/.config/lobe-chat
+    restart: unless-stopped</code></pre>
+
+<p>The <code>ACCESS_CODE</code> environment variable sets a simple password for the UI. Without it, anyone on your network can access your chat interface and burn through your API credits or GPU time.</p>
+
+<p>Start it with <code>docker compose up -d</code> and open <code>http://your-server-ip:3210</code>. You should see the LobeChat welcome screen with a "Get Started" button.</p>
+
+<h2>The Connection Settings</h2>
+
+<p>In the LobeChat interface, click your profile icon in the top-right corner and select "Settings." In the settings panel, look for the "Language Model" tab on the left sidebar. This is where you configure providers.</p>
+
+<p>Click "OpenAI" in the provider list. Yes, OpenAI — even though you are connecting to a local server. LobeChat uses the OpenAI client SDK internally, so every OpenAI-compatible local API goes through this provider slot.</p>
+
+<p>Fill in these exact fields:</p>
+
+<ul>
+    <li><strong>API Key:</strong> <code>sk-anything</code> — vLLM and GPUStack ignore this field, but LobeChat requires a non-empty string. I use <code>sk-local</code> so I remember it is not a real key.</li>
+    <li><strong>API Proxy URL:</strong> <code>http://192.168.1.50:8000/v1</code> — this is the part that breaks. Not <code>http://localhost:8000/v1</code>. Not <code>http://127.0.0.1:8000/v1</code>. You need the actual IP address of the machine running vLLM, because LobeChat is inside a Docker container and localhost inside Docker points to the container, not the host.</li>
+    <li><strong>Model List:</strong> leave empty unless you want to restrict which models appear in the dropdown.</li>
+    <li><strong>Use Client-Side Fetching:</strong> leave off. This option sends requests from your browser instead of the LobeChat server. It sounds useful for local networks, but it triggers CORS errors unless your inference server is configured to allow browser-origin requests.</li>
+</ul>
+
+<p>Click "Check" to test the connection. If you see a green checkmark, you are one of the lucky ones. If you see "Connection failed," read the next section.</p>
+
+<h2>CORS Configuration: The Part That Breaks Everything</h2>
+
+<p>Here is what happened to me. I filled in the API URL correctly. I clicked "Check." LobeChat said "Connection failed." I checked the vLLM logs — nothing. No request arrived. I checked the browser console and saw this:</p>
+
+<pre><code>Access to fetch at 'http://192.168.1.50:8000/v1/models'
+from origin 'http://192.168.1.50:3210' has been blocked by CORS policy:
+No 'Access-Control-Allow-Origin' header is present on the requested resource.</code></pre>
+
+<p>CORS. Cross-Origin Resource Sharing. The browser security mechanism that prevents a website on one domain from making requests to another domain unless the second domain explicitly allows it. LobeChat's "Check" button makes a <code>fetch</code> request from the browser to your API. The API says "I don't know you" and the browser blocks it.</p>
+
+<p>vLLM does not enable CORS by default. Neither does GPUStack. You have to add it.</p>
+
+<p><strong>For vLLM:</strong></p>
+
+<pre><code>python -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen3-7B-Instruct \
+  --port 8000 \
+  --host 0.0.0.0 \
+  --max-model-len 8192 \
+  --gpu-memory-utilization 0.85 \
+  --allowed-origins "*"</code></pre>
+
+<p>The <code>--allowed-origins "*"</code> flag tells vLLM to accept requests from any origin. For a home network behind a router, this is fine. If your vLLM instance is exposed to the internet, restrict this to your actual domain.</p>
+
+<p><strong>For GPUStack:</strong></p>
+
+<p>Edit <code>/etc/gpustack/config.yaml</code> and add:</p>
+
+<pre><code>cors:
+  enabled: true
+  origins:
+    - "*"</code></pre>
+
+<p>Then restart GPUStack: <code>sudo systemctl restart gpustack</code>.</p>
+
+<p>After enabling CORS, hard-refresh the LobeChat page (Ctrl+Shift+R or Cmd+Shift+R) and click "Check" again. The green checkmark should appear.</p>
+
+<p>One more gotcha: some browser extensions block CORS preflight requests. If you have privacy extensions like uBlock Origin or Privacy Badger, try the connection check in an incognito window with extensions disabled. I lost 15 minutes to an extension I forgot I had installed.</p>
+
+<h2>Model Name Mapping: Why "gpt-3.5-turbo" Works</h2>
+
+<p>After the connection check passed, I selected my model from the dropdown and sent my first message. LobeChat returned an error: "Model not found."</p>
+
+<p>I checked the vLLM logs. The request arrived. The model name in the request body was <code>gpt-3.5-turbo</code>. My vLLM instance was serving <code>Qwen/Qwen3-7B-Instruct</code>. Those names do not match, so vLLM returned a 404.</p>
+
+<p>LobeChat defaults to OpenAI model names in the dropdown. When you select "gpt-3.5-turbo," it sends that exact string as the model parameter. Your local API has no idea what "gpt-3.5-turbo" means. You have to map it.</p>
+
+<p>In the OpenAI provider settings, look for the "Custom Model Name" or "Model ID Override" field. The exact label changes between LobeChat versions, but it is usually near the API URL field. Enter your actual model name there:</p>
+
+<pre><code>Qwen/Qwen3-7B-Instruct</code></pre>
+
+<p>Alternatively, you can add a custom provider instead of using the OpenAI slot. Go to Settings > Language Model > "Add Custom Provider." Set the provider name to something like "Local vLLM," paste the same API URL, and set the model name explicitly. This keeps your local models separate from any real OpenAI configuration you might have.</p>
+
+<p>If you run multiple local models — say, Qwen3-7B and Llama-3.1-8B — you need to add each one as a separate provider entry or use the model list field to specify multiple IDs separated by commas:</p>
+
+<pre><code>Qwen/Qwen3-7B-Instruct,meta-llama/Llama-3.1-8B-Instruct</code></pre>
+
+<p>LobeChat will query <code>/v1/models</code> to populate the dropdown. If your API supports the models endpoint, this works automatically. vLLM does. GPUStack does. Ollama does not, so you have to enter the names manually.</p>
+
+<h2>Testing the Connection</h2>
+
+<p>Once the settings are saved, start a new conversation. In the model selector at the top of the chat window, choose your local model. Type a simple test message: "What is 17 times 23?"</p>
+
+<p>If everything is configured correctly, you should see a response within a few seconds. The first request is always slower because vLLM warms up CUDA kernels. Subsequent requests will be faster.</p>
+
+<p>Check these indicators:</p>
+
+<ul>
+    <li>The message bubble appears with a thinking indicator, then fills with text.</li>
+    <li>The token count shows in the bottom-right corner of the message.</li>
+    <li>The model name in the top selector matches what you configured.</li>
+    <li>No red error banners appear at the top of the screen.</li>
+</ul>
+
+<p>If you see "Failed to fetch" or a timeout, check the browser console for the exact error. Common causes: wrong IP address, CORS still disabled, firewall blocking port 8000, or vLLM crashed.</p>
+
+<h2>Customizing the UI</h2>
+
+<p>LobeChat's default theme is clean but generic. I made three changes that improved my daily workflow.</p>
+
+<p><strong>1. Set a custom provider icon and name.</strong> In the provider settings, you can upload an icon and rename "OpenAI" to "Local Server." This prevents the cognitive dissonance of seeing the OpenAI logo next to your homemade Qwen deployment.</p>
+
+<p><strong>2. Enable the system prompt editor.</strong> Go to Settings > General > "Enable System Prompt." This adds a text area above the chat where you can set the system message per conversation. It is essential for testing how different system prompts affect model behavior.</p>
+
+<p><strong>3. Configure the default model.</strong> In Settings > General, set your local model as the default. Otherwise, every new conversation starts with gpt-3.5-turbo selected, and your first message fails until you remember to switch.</p>
+
+<p><strong>4. Set up conversation archiving.</strong> Without a database backend, LobeChat stores conversations in the browser's localStorage. If you clear cookies or switch devices, your history disappears. For a persistent setup, configure the PostgreSQL environment variables in your Docker Compose file:</p>
+
+<pre><code>environment:
+  - DATABASE_URL=postgresql://user:pass@postgres:5432/lobechat
+  - NEXT_AUTH_SECRET=your-random-secret</code></pre>
+
+<p>This requires running a PostgreSQL container alongside LobeChat. It is worth the effort if you use LobeChat daily.</p>
+
+<h2>Troubleshooting: Three Common Failures</h2>
+
+<p>These are the failures I see most often in forums and Discord, including the ones that cost me the most time.</p>
+
+<h3>Failure 1: "Connection failed" despite correct URL</h3>
+
+<p><strong>Symptom:</strong> The connection check in LobeChat fails immediately. Curl from the host machine works fine.</p>
+
+<p><strong>Cause:</strong> You used <code>localhost</code> or <code>127.0.0.1</code> in the API URL. Inside the LobeChat Docker container, localhost refers to the container itself, not the Docker host.</p>
+
+<p><strong>Fix:</strong> Use the host machine's actual IP address on your local network. On Linux, <code>ip addr show</code> will list it. It usually looks like <code>192.168.1.xxx</code>. If you are running LobeChat and vLLM on the same machine, you can also use the Docker host gateway address: <code>http://host.docker.internal:8000/v1</code> on Docker Desktop, or create a custom Docker network and use container names.</p>
+
+<h3>Failure 2: CORS errors in the browser console</h3>
+
+<p><strong>Symptom:</strong> The connection check fails with CORS-related errors in the browser's developer console. The network tab shows the request as "blocked."</p>
+
+<p><strong>Cause:</strong> Your inference server does not send <code>Access-Control-Allow-Origin</code> headers. This is the default for vLLM and GPUStack.</p>
+
+<p><strong>Fix:</strong> Add the CORS flag to your inference server startup. For vLLM, use <code>--allowed-origins "*"</code>. For GPUStack, enable CORS in config.yaml. Hard-refresh LobeChat after making the change. Test in an incognito window to rule out extension interference.</p>
+
+<h3>Failure 3: "Model not found" or 404 on every message</h3>
+
+<p><strong>Symptom:</strong> The connection check passes. Starting a conversation returns an error saying the model does not exist.</p>
+
+<p><strong>Cause:</strong> LobeChat is sending an OpenAI model name like <code>gpt-3.5-turbo</code> or <code>gpt-4</code>, but your local API serves models with Hugging Face IDs like <code>Qwen/Qwen3-7B-Instruct</code>.</p>
+
+<p><strong>Fix:</strong> Override the model name in the provider settings. Either set a custom model ID in the OpenAI provider slot, or add a separate custom provider with the correct name. If you use the model list field, make sure the names exactly match what your API returns from <code>/v1/models</code>. Capitalization matters. The slash in <code>Qwen/Qwen3-7B-Instruct</code> matters.</p>
+
+<p>One edge case: if you run vLLM with <code>--served-model-name</code>, you can make it respond to <code>gpt-3.5-turbo</code> as an alias:</p>
+
+<pre><code>python -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen3-7B-Instruct \
+  --served-model-name gpt-3.5-turbo</code></pre>
+
+<p>This is useful if you have tools hardcoded to use OpenAI model names. LobeChat will then accept <code>gpt-3.5-turbo</code> and vLLM will map it to your actual model.</p>
+
+<h2>Parting Notes</h2>
+
+<p>LobeChat is the best open-source chat interface I have found for local LLMs. It is polished, actively maintained, and supports enough features that I no longer miss the commercial alternatives. But the connection setup is under-documented in exactly the places where users get stuck.</p>
+
+<p>The three rules that would have saved me two hours: use the real IP address, not localhost; enable CORS on your inference server; and override the model name so it matches what your API serves. Every other problem I hit was a consequence of one of those three.</p>
+
+<p>My current setup runs LobeChat in Docker on port 3210, vLLM on port 8000 with CORS enabled, and GPUStack on port 80 as a backup. I can switch between Qwen3-7B, Llama-3.1-8B, and GPT-4o without leaving the same tab. The local models cost me nothing per token. The UI costs me nothing at all. The only price was the Sunday afternoon I spent learning how the pieces fit together.</p>
+
+<p>Start with the curl test. Get that working first. Then add LobeChat, one setting at a time. When something breaks, check the browser console before you check the server logs — half the errors are CORS, and the console tells you immediately.</p>
+
+                </div>
+            </div>
+        </article>
+
+        <section class="adsense-slot">
+            <div class="adsense-placeholder">
+                AdSense ad slot (mid-content) — replace with real ad code after deployment
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">AI Deployment Notes</div>
+                    <p>Hands-on guides for local LLM deployment, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Field Notes · Pitfall Guides · Daily Updates</span>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Posts</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Field Notes</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>This site uses cookies to analyze traffic. By continuing, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

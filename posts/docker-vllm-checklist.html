@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A battle-tested checklist for deploying vLLM in Docker. 17 items I learned the hard way — from shared memory to log rotation to the final sanity check before production.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Docker + vLLM: The Complete Deployment Checklist I Wish I Had on Day One — AI Deployment Notes">
+    <meta property="og:description" content="I have deployed vLLM in Docker enough times to have a scar for each mistake. Here is the checklist I now run through every single time.">
+    <meta property="og:url" content="https://local-llm.org/posts/docker-vllm-checklist.html">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>Docker + vLLM: The Complete Deployment Checklist I Wish I Had on Day One — AI Deployment Notes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://local-llm.org/posts/docker-vllm-checklist.html">
+    <meta name="google-adsense-account" content="ca-pub-7451090615788854">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "Docker + vLLM: The Complete Deployment Checklist I Wish I Had on Day One",
+      "description": "A battle-tested checklist for deploying vLLM in Docker. 17 items I learned the hard way — from shared memory to log rotation to the final sanity check before production.",
+      "datePublished": "2026-04-26",
+      "author": {"@type": "Organization", "name": "AI Deployment Notes"},
+      "publisher": {"@type": "Organization", "name": "AI Deployment Notes"},
+      "articleSection": "Tutorial",
+      "inLanguage": "en"
+    }
+    </script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo"><a href="/index.html">AI Deployment Notes</a></div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/index.html">Home</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Posts</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="lang-switcher">
+                <a href="/zh/posts/index.html" class="lang-link" aria-label="Switch to Chinese">中文</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <article>
+            <header class="post-header">
+                <div class="container">
+                    <span class="post-category cat-tut">Tutorial</span>
+                    <h1>Docker + vLLM: The Complete Deployment Checklist I Wish I Had on Day One</h1>
+                    <div class="post-meta">
+                        <time datetime="2026-04-26">April 26, 2026</time>
+                        <span>·</span>
+                        <span class="read-time">8 min read</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="post-body">
+                <div class="container">
+
+<p>I have deployed vLLM in Docker enough times to have a scar for each mistake. The first time, I spent three hours debugging why the container could not see my GPU. The second time, I filled a 2TB disk with logs in 36 hours. The third time, I forgot to set shared memory and watched a batch inference job crash with a cryptic PyTorch multiprocessing error that sent me down a rabbit hole of reading Linux kernel documentation.</p>
+
+<p>This checklist is what I now run through every single time I start a vLLM container. It is not theoretical. Every item on this list is something that either caught me, still gets me, or saved me after I added it to the routine. I keep it in a text file on my server and copy-paste from it before every deployment. You should too.</p>
+
+<h2>1. GPU Runtime Check (nvidia-docker)</h2>
+
+<p><strong>Why it matters:</strong> Docker does not speak GPU by default. Without the NVIDIA Container Toolkit, your vLLM container starts, loads the model into system RAM, and then dies when it tries to allocate a CUDA context. The error message is usually something useless like "CUDA error: no CUDA-capable device is detected," which makes you think your driver is broken when it is not.</p>
+
+<p><strong>Caught me:</strong> Yes, on my very first Docker deployment. I had CUDA 12.4 installed on the host, nvidia-smi worked fine, and I assumed Docker would "just inherit" the GPU. It does not.</p>
+
+<p>Verify the toolkit is installed:</p>
+
+<pre><code>nvidia-ctk --version</code></pre>
+
+<p>Test that Docker can see the GPU:</p>
+
+<pre><code>docker run --rm --gpus all nvidia/cuda:12.4-base-ubuntu22.04 nvidia-smi</code></pre>
+
+<p>If that prints your GPU info, you are good. If it says "could not select device driver," install the toolkit:</p>
+
+<pre><code>sudo apt-get install -y nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker</code></pre>
+
+<h2>2. Shared Memory Size (--shm-size)</h2>
+
+<p><strong>Why it matters:</strong> PyTorch uses shared memory for inter-process communication during data loading and tensor operations. Docker defaults to 64MB of shared memory. vLLM with tensor parallelism or even moderate batch sizes will blow through that in seconds. The error you get is "RuntimeError: DataLoader worker (pid XXXX) is killed by signal: Bus error," which is Linux-speak for "I ran out of shared memory and crashed your process."</p>
+
+<p><strong>Caught me:</strong> Yes, during a batch summarization job at 2 AM. The container had been running fine for hours, then died on a larger batch. I spent 45 minutes reading PyTorch GitHub issues before realizing it was a Docker flag.</p>
+
+<p>Set it to at least half your system RAM, or use the host's shared memory directly:</p>
+
+<pre><code>docker run --gpus all --shm-size=32g ...</code></pre>
+
+<p>Or mount the host's /dev/shm:</p>
+
+<pre><code>docker run --gpus all --mount type=bind,source=/dev/shm,target=/dev/shm ...</code></pre>
+
+<p>I now default to <code>--shm-size=64g</code> on my 128GB machine and have not had a bus error since.</p>
+
+<h2>3. Port Mapping (Why 8000 Is Not Always 8000)</h2>
+
+<p><strong>Why it matters:</strong> vLLM's default API port is 8000. So is Grafana's. So is the default port for a dozen other services you might have installed six months ago and forgotten about. If something is already bound to 8000 on your host, Docker will not warn you with a helpful message. It will either fail to start the container or, worse, map the port to something random if you are using Docker Compose and did not pin it.</p>
+
+<p><strong>Caught me:</strong> I had an old Grafana instance running from a monitoring experiment. My vLLM container started, mapped port 8000 to some high-numbered ephemeral port, and my API client could not connect. I spent 20 minutes checking firewall rules.</p>
+
+<p>Always check before you map:</p>
+
+<pre><code>sudo lsof -i :8000</code></pre>
+
+<p>Be explicit about the mapping:</p>
+
+<pre><code>docker run --gpus all -p 8000:8000 ...</code></pre>
+
+<p>If 8000 is taken, pick a different host port:</p>
+
+<pre><code>docker run --gpus all -p 8080:8000 ...</code></pre>
+
+<p>And document which port you chose, because future-you will forget.</p>
+
+<h2>4. Volume Mounts (Model Path Consistency)</h2>
+
+<p><strong>Why it matters:</strong> vLLM downloads models from Hugging Face on first run. Without a volume mount, those downloads live inside the container's ephemeral filesystem. When the container restarts, the model is gone, and you wait another 20 minutes for it to download again. With a volume mount, the model persists on the host, and startup drops from 20 minutes to 20 seconds.</p>
+
+<p><strong>Caught me:</strong> Not once, but three times. I kept wondering why my "optimized" container took forever to start after a reboot. The model cache was inside the container, and I was re-downloading 15GB every time.</p>
+
+<p>Mount your Hugging Face cache:</p>
+
+<pre><code>docker run --gpus all \
+  -v /opt/models:/root/.cache/huggingface \
+  -p 8000:8000 \
+  vllm/vllm-openai:latest \
+  --model Qwen/Qwen3-7B-Instruct</code></pre>
+
+<p>Use absolute paths on the host. Relative paths in Docker volume mounts are relative to the Docker daemon's working directory, which is almost never what you expect.</p>
+
+<p>I keep my models in <code>/opt/models</code> and symlink <code>/root/.cache/huggingface</code> inside the container to that mount. Consistent paths make debugging easier when you are SSH'd into the host at midnight.</p>
+
+<h2>5. Environment Variables (CUDA_VISIBLE_DEVICES)</h2>
+
+<p><strong>Why it matters:</strong> You might have multiple GPUs and want to reserve one for another task. Or you might want to test on a specific GPU to verify it is not the one with the flaky cooler. <code>CUDA_VISIBLE_DEVICES</code> controls which GPUs the container sees, but it interacts weirdly with Docker's <code>--gpus</code> flag. If you pass <code>--gpus all</code> and then set <code>CUDA_VISIBLE_DEVICES=1</code>, the container sees all GPUs but CUDA only uses device 1. If you pass <code>--gpus '"device=1"'</code>, the container only sees one GPU, and <code>CUDA_VISIBLE_DEVICES</code> inside the container will see it as device 0.</p>
+
+<p><strong>Caught me:</strong> I set <code>CUDA_VISIBLE_DEVICES=1</code> inside the container while passing <code>--gpus all</code>, then tensor parallelism failed because it could not find the second GPU it expected. The error was "Expected 2 GPUs but found 1," which sent me checking my hardware instead of my flags.</p>
+
+<p>If you want only GPU 1:</p>
+
+<pre><code>docker run --gpus '"device=1"' -e CUDA_VISIBLE_DEVICES=0 ...</code></pre>
+
+<p>If you want all GPUs but restrict vLLM to GPU 1:</p>
+
+<pre><code>docker run --gpus all -e CUDA_VISIBLE_DEVICES=1 ...</code></pre>
+
+<p>Keep a note of which approach you used. Mixing them is how you end up with a GitHub issue at 3 AM.</p>
+
+<h2>6. Memory Limits (Docker vs GPU Memory)</h2>
+
+<p><strong>Why it matters:</strong> Docker's <code>--memory</code> flag limits system RAM. It does <em>not</em> limit GPU memory. vLLM has its own GPU memory limit via <code>--gpu-memory-utilization</code>, but that is inside the container and independent of Docker's memory cgroups. If you set Docker's memory limit too low, vLLM will OOM during model loading even though your GPU has 24GB free. If you set it too high, you might starve the host OS.</p>
+
+<p><strong>Caught me:</strong> I set <code>--memory=16g</code> thinking I was being conservative. vLLM loaded the model weights into GPU memory fine, but the initial CPU-side preprocessing needed 20GB of system RAM. The container got killed by the cgroup OOM killer before it ever touched the GPU.</p>
+
+<p>Set Docker memory generously, or not at all for vLLM:</p>
+
+<pre><code>docker run --gpus all --memory=64g ...</code></pre>
+
+<p>Control GPU memory through vLLM's own flag:</p>
+
+<pre><code>--gpu-memory-utilization 0.85</code></pre>
+
+<p>This leaves 15% headroom on the GPU for CUDA overhead and unexpected allocations. I have found 0.85 to be the sweet spot. 0.95 works until it does not, and then you get a CUDA OOM at the worst possible moment.</p>
+
+<h2>7. Health Checks</h2>
+
+<p><strong>Why it matters:</strong> vLLM can be in a state where the process is running but the API is not responding. This happens during model loading, after a CUDA error that did not crash the process, or when the model download is corrupted and the server hangs during weight initialization. Without a health check, your orchestrator thinks everything is fine.</p>
+
+<p><strong>Caught me:</strong> My container was "running" for six hours without serving a single request. The model download had been interrupted, and vLLM was stuck in a retry loop that never timed out. Docker showed the container as healthy because the process had not exited.</p>
+
+<p>Add a health check in Docker Compose:</p>
+
+<pre><code>healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 120s</code></pre>
+
+<p>Or in a Dockerfile:</p>
+
+<pre><code>HEALTHCHECK --interval=30s --timeout=10s --start-period=120s \
+  CMD curl -f http://localhost:8000/health || exit 1</code></pre>
+
+<p>The <code>start_period</code> is crucial. Model loading can take 60-120 seconds, and you do not want the health check killing the container before it has finished starting.</p>
+
+<h2>8. Restart Policy</h2>
+
+<p><strong>Why it matters:</strong> vLLM crashes. Not often, but it crashes. A CUDA OOM, a corrupted model file, a transient network issue during download — any of these can kill the process. Without a restart policy, your API is down until you manually notice and fix it. With a restart policy, Docker brings it back automatically.</p>
+
+<p><strong>Caught me:</strong> A power flicker rebooted my server at 3 AM. The container did not restart because I had not set a policy. I found out when my morning batch job failed.</p>
+
+<p>Use unless-stopped for most cases:</p>
+
+<pre><code>docker run --gpus all --restart unless-stopped ...</code></pre>
+
+<p>In Docker Compose:</p>
+
+<pre><code>restart: unless-stopped</code></pre>
+
+<p>Avoid <code>always</code> unless you genuinely want the container starting on every boot regardless of whether you manually stopped it. I use <code>unless-stopped</code> because sometimes I want to take the container down for maintenance without fighting Docker's restart loop.</p>
+
+<h2>9. Log Rotation (The One That Filled My Disk)</h2>
+
+<p><strong>Why it matters:</strong> Docker containers log stdout and stderr to JSON files on the host by default. These files grow forever. vLLM is verbose. A single day of serving can generate hundreds of megabytes of logs. I once filled a 2TB NVMe drive in 36 hours because I had four vLLM containers running with debug logging enabled and no rotation configured.</p>
+
+<p><strong>Caught me:</strong> This is the one that still gets me. I know about log rotation. I have been burned by it. And yet, every few months, I spin up a container without checking, and three weeks later I get a disk space alert.</p>
+
+<p>Configure log rotation in Docker daemon settings (<code>/etc/docker/daemon.json</code>):</p>
+
+<pre><code>{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m",
+    "max-file": "5"
+  }
+}</code></pre>
+
+<p>Or per-container:</p>
+
+<pre><code>docker run --gpus all \
+  --log-driver json-file \
+  --log-opt max-size=100m \
+  --log-opt max-file=5 ...</code></pre>
+
+<p>In Docker Compose:</p>
+
+<pre><code>logging:
+  driver: "json-file"
+  options:
+    max-size: "100m"
+    max-file: "5"</code></pre>
+
+<p>100MB times 5 files per container times 4 containers is 2GB of logs, which is manageable. Without this, it is unbounded, and unbounded growth always wins.</p>
+
+<h2>10. Network Mode (Host vs Bridge)</h2>
+
+<p><strong>Why it matters:</strong> Docker's default bridge network adds a NAT layer between the container and the host. For most services, this is fine. For vLLM serving large models with high-throughput streaming, the NAT overhead is measurable, and port mapping can be finicky if you are running multiple containers. Host mode removes the NAT and binds the container directly to the host network stack.</p>
+
+<p><strong>Caught me:</strong> I was benchmarking vLLM throughput and getting numbers 8% lower than expected. After two hours of checking CUDA settings, I realized the bridge network was adding latency to each request. Switching to host mode fixed it.</p>
+
+<p>Use host mode for performance-critical deployments:</p>
+
+<pre><code>docker run --gpus all --network host ...</code></pre>
+
+<p>Use bridge mode if you need port isolation or are running on a shared host where you do not want the container binding directly to interfaces:</p>
+
+<pre><code>docker run --gpus all -p 8000:8000 --network bridge ...</code></pre>
+
+<p>Host mode means you cannot map ports. The container's port 8000 is the host's port 8000. If you run two vLLM containers in host mode, they will fight over the port unless you configure vLLM to use different ports internally.</p>
+
+<h2>11. User Permissions</h2>
+
+<p><strong>Why it matters:</strong> By default, Docker containers run as root. When you mount a host directory for model caching, the container writes files as root. Later, when you try to manage those files from your regular user account, you get permission denied. Or worse, you run <code>sudo chmod -R 777</code> on your model cache and create a security hole.</p>
+
+<p><strong>Caught me:</strong> My CI pipeline could not clean up old model files because they were owned by root. I ended up adding the CI user to the docker group and using sudo, which is a hack on top of a hack.</p>
+
+<p>Run the container as your user:</p>
+
+<pre><code>docker run --gpus all --user $(id -u):$(id -g) \
+  -v /opt/models:/root/.cache/huggingface ...</code></pre>
+
+<p>Or create a dedicated user for vLLM and set the volume permissions beforehand:</p>
+
+<pre><code>sudo useradd -r -s /bin/false vllm
+sudo mkdir -p /opt/models
+sudo chown -R vllm:vllm /opt/models</code></pre>
+
+<p>If the container needs to write to the mount, the host directory must be writable by the container's UID. Map them to match, or you will spend an afternoon debugging why the model download "succeeds" but the files are not there.</p>
+
+<h2>12. Timezone Sync</h2>
+
+<p><strong>Why it matters:</strong> vLLM logs timestamps. Prometheus metrics have timestamps. Your log aggregation system has timestamps. If the container is in UTC and your host is in EST, your logs are five hours off, and correlating events across systems becomes a nightmare. This is especially painful when debugging performance issues where you need to line up vLLM logs with system metrics.</p>
+
+<p><strong>Caught me:</strong> I was correlating vLLM request logs with Grafana dashboards and could not figure out why the latency spikes did not line up. The container was in UTC. My dashboards were in local time. Five hours is a lot of latency to explain.</p>
+
+<p>Mount the host timezone:</p>
+
+<pre><code>docker run --gpus all \
+  -v /etc/localtime:/etc/localtime:ro \
+  -v /etc/timezone:/etc/timezone:ro ...</code></pre>
+
+<p>Or set it explicitly:</p>
+
+<pre><code>docker run --gpus all -e TZ=America/New_York ...</code></pre>
+
+<p>Verify inside the container:</p>
+
+<pre><code>docker exec <container> date</code></pre>
+
+<p>This takes ten seconds and saves hours of confusion.</p>
+
+<h2>13. Resource Monitoring Setup</h2>
+
+<p><strong>Why it matters:</strong> vLLM exposes Prometheus metrics on <code>/metrics</code>, but only if you enabled them. Docker exposes container stats via <code>docker stats</code>, but only if you are looking. You need both: vLLM metrics for inference performance, Docker metrics for container health. Without monitoring, you are flying blind, and the first sign of trouble is usually a user complaint.</p>
+
+<p><strong>Caught me:</strong> I had no monitoring on my first production vLLM deployment. The model was running, but GPU cache usage was at 98% and requests were queueing. I only found out when a user reported timeouts. By then, the queue was 200 requests deep.</p>
+
+<p>Enable vLLM metrics:</p>
+
+<pre><code>--enable-metrics</code></pre>
+
+<p>Scrape them with Prometheus:</p>
+
+<pre><code>scrape_configs:
+  - job_name: 'vllm'
+    static_configs:
+      - targets: ['localhost:8000']</code></pre>
+
+<p>Watch Docker stats in real time:</p>
+
+<pre><code>docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"</code></pre>
+
+<p>Key vLLM metrics to alert on: <code>vllm:gpu_cache_usage_perc</code> above 0.9 means you are about to start evicting KV cache. <code>vllm:num_requests_waiting</code> above 10 means your throughput is below your arrival rate. Set up alerts for both.</p>
+
+<h2>14. Backup Strategy for Models</h2>
+
+<p><strong>Why it matters:</strong> Model files are large and take a long time to download. If your disk fails, or you accidentally delete the cache, or Hugging Face has an outage, you do not want to wait 30 minutes for a re-download while your API is down. A local backup of your most-used models is cheap insurance.</p>
+
+<p><strong>Caught me:</strong> I ran <code>rm -rf</code> on the wrong directory during a cleanup. 340GB of models vanished. It took six hours to re-download everything on my connection.</p>
+
+<p>Keep a secondary copy on a different disk:</p>
+
+<pre><code>rsync -av --progress /opt/models/ /mnt/backup/models/</code></pre>
+
+<p>Or use a simple cron job:</p>
+
+<pre><code>0 3 * * * rsync -av /opt/models/ /mnt/backup/models/ >> /var/log/model-backup.log 2>&1</code></pre>
+
+<p>You do not need to back up every model. Just the ones you rely on for production. I back up my three most-used models weekly. The rest can be re-downloaded if needed.</p>
+
+<h2>15. Update Strategy</h2>
+
+<p><strong>Why it matters:</strong> vLLM releases updates frequently. New versions fix bugs, add models, and improve performance. They also occasionally break backward compatibility, change default behavior, or introduce new CUDA requirements. Updating blindly is how you turn a working deployment into a weekend debugging session.</p>
+
+<p><strong>Caught me:</strong> I pulled <code>vllm/vllm-openai:latest</code> and my startup scripts broke because the default API server path changed. I had not pinned the version, and "latest" had moved on without me.</p>
+
+<p>Pin your image version:</p>
+
+<pre><code>vllm/vllm-openai:v0.11.2</code></pre>
+
+<p>Test updates in a separate container before touching production:</p>
+
+<pre><code>docker run --gpus all -p 8001:8000 \
+  vllm/vllm-openai:v0.11.3 \
+  --model Qwen/Qwen3-7B-Instruct</code></pre>
+
+<p>Read the release notes before updating. vLLM's GitHub releases are detailed and usually flag breaking changes. I keep a changelog file on my server with the current version and any migration steps I needed.</p>
+
+<h2>16. Security (Do Not Run as Root)</h2>
+
+<p><strong>Why it matters:</strong> A vLLM container running as root with GPU access and network exposure is a high-value target. If there is a vulnerability in vLLM or one of its dependencies, an attacker gets root on your GPU server. That is bad. GPU servers are expensive, and attackers love them for cryptomining.</p>
+
+<p><strong>Caught me:</strong> Not directly, but I ran a security scan on my setup and found the container listening on 0.0.0.0:8000 as root with no authentication. Anyone who could reach that port could send prompts and potentially exploit the API.</p>
+
+<p>Run as a non-root user:</p>
+
+<pre><code>docker run --gpus all --user 1000:1000 ...</code></pre>
+
+<p>Bind to localhost only if you do not need external access:</p>
+
+<pre><code>docker run --gpus all -p 127.0.0.1:8000:8000 ...</code></pre>
+
+<p>Put an authentication layer in front. vLLM's API server does not have built-in auth. Use nginx with basic auth, or a reverse proxy with API key validation, or run it on a private network. Exposing vLLM directly to the internet without auth is asking for trouble.</p>
+
+<h2>17. The "Did I Turn Off the Oven" Check Before Deploying</h2>
+
+<p><strong>Why it matters:</strong> You have been through the checklist. You have set the flags. You are ready to deploy. But there is always one thing. The model ID you typed from memory. The port number you copied from an old script. The volume path that is slightly different on this machine. The environment variable that worked on your other server but not this one.</p>
+
+<p><strong>Still gets me:</strong> Every single time. I once deployed a container with the wrong model name and did not notice for two hours because the API was responding — it was just responding with a different model than expected. My users got answers from Llama-3.1 when they thought they were querying Qwen3. The answers were fine, but the behavior was wrong, and it took a while to trace.</p>
+
+<p>Before you hit enter, run this sanity check:</p>
+
+<pre><code># Verify the model path exists and has the right files
+ls -la /opt/models/hub/models--Qwen--Qwen3-7B-Instruct/snapshots/
+
+# Verify the port is free
+sudo lsof -i :8000
+
+# Verify GPU availability
+nvidia-smi
+
+# Do a dry-run of the docker command without -d (detached)
+# Watch the logs for the first 60 seconds
+# Then Ctrl+C and re-run with -d</code></pre>
+
+<p>My final pre-flight script looks like this:</p>
+
+<pre><code>#!/bin/bash
+set -e
+
+echo "=== Pre-flight check ==="
+echo "GPU status:"
+nvidia-smi --query-gpu=name,memory.total,memory.free --format=csv
+
+echo "Port 8000 status:"
+if lsof -i :8000 >/dev/null 2>&1; then
+  echo "WARNING: Port 8000 is in use"
+  exit 1
+else
+  echo "OK: Port 8000 is free"
+fi
+
+echo "Model cache:"
+df -h /opt/models
+
+echo "Docker image:"
+docker images vllm/vllm-openai:v0.11.2 --format "{{.Repository}}:{{.Tag}} {{.Size}}"
+
+echo "=== All checks passed ==="</code></pre>
+
+<p>I run this before every deployment. It takes five seconds. It has caught wrong model paths, full disks, port conflicts, and missing images. It is the cheapest insurance you can buy.</p>
+
+<h2>The Final Word</h2>
+
+<p>This checklist lives in <code>/opt/vllm/checklist.md</code> on my server. I read it before every deployment, even when I am sure I remember everything. I do not remember everything. Neither will you.</p>
+
+<p>The thing about Docker deployments is that they feel repeatable until they are not. You run the same command ten times and it works. The eleventh time, you are on a different machine, or a different network, or a different version of Docker, and something subtle breaks. The checklist is not about preventing every failure. It is about preventing the failures you have already had once.</p>
+
+<p>Print this out. Save it somewhere you will actually look at it. Add your own items as you discover them. The best checklist is the one you use, not the one that sits in a bookmark folder collecting dust.</p>
+
+<p>And if you find item 18 — the one I have not learned yet — email me. I will add it to the list and credit you for saving me from my next 2 AM debugging session.</p>
+
+                </div>
+            </div>
+        </article>
+
+        <section class="adsense-slot">
+            <div class="adsense-placeholder">
+                AdSense ad slot (mid-content) — replace with real ad code after deployment
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">AI Deployment Notes</div>
+                    <p>Hands-on guides for local LLM deployment, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Field Notes · Pitfall Guides · Daily Updates</span>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Posts</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Field Notes</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>This site uses cookies to analyze traffic. By continuing, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>
