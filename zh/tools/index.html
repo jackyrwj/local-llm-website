@@ -54,7 +54,7 @@
                             <li><a href="/zh/tools/vllm-generator.html">vLLM 启动命令生成器</a></li>
                             <li><a href="/zh/tools/memory-calculator.html">大模型显存估算器</a></li>
                             <li><a href="/zh/tools/cost-calculator.html">本地 vs API 成本计算器</a></li>
-                            <li><a href="/zh/tools/deployment-errors.html">常见部署错误及修复方式</a></li>
+                            <li><a href="/zh/tools/deployment-errors.html">常见部署错误及其原因和修复方式</a></li>
                             <li><a href="/zh/tools/deployment-advisor.html">模型部署选型助手</a></li>
                         </ul>
                     </li>
@@ -88,7 +88,7 @@
                     <p>把 vLLM 命令、显存、成本、错误排查和选型这些反复查的问题，变成可直接操作的工具。适合部署 Qwen、Llama、DeepSeek、Ollama、GPUStack 和自建 API 服务时使用。</p>
                     <div class="hero-actions">
                         <a href="/zh/tools/vllm-generator.html" class="btn btn-hero-primary">开始生成命令</a>
-                        <a href="/zh/tools/deployment-errors.html" class="btn btn-hero-outline">查看常见错误修复</a>
+                        <a href="/zh/tools/deployment-errors.html" class="btn btn-hero-outline">查看常见错误及其原因和修复方式</a>
                     </div>
                 </div>
                 <div class="tools-hero-panel" aria-label="工具概览">
@@ -131,7 +131,7 @@
                         <span>对比自建 GPU 与云端 API 的月成本和回本周期。</span>
                     </a>
                     <a href="/zh/tools/deployment-errors.html" class="tool-link-card">
-                        <strong>常见部署错误及修复方式</strong>
+                        <strong>常见部署错误及其原因和修复方式</strong>
                         <span>浏览/搜索常见部署错误，含根因分析和可执行的修复方案。</span>
                     </a>
                     <a href="/zh/tools/deployment-advisor.html" class="tool-link-card">
@@ -157,7 +157,7 @@
                         <p>显存和吞吐会受到模型结构、注意力实现、batch 策略、量化格式、驱动版本和 vLLM 参数影响。工具给的是部署前的保守判断，真正上线前仍建议用目标并发做压测。</p>
                     </details>
                     <details class="faq-item">
-                        <summary>报错诊断器会上传我的日志吗？</summary>
+                        <summary>错误诊断工具会上传我的日志吗？</summary>
                         <p>不会。当前工具全部在浏览器本地运行，不需要后端接口，也不会把日志发送到服务器。</p>
                     </details>
                     <details class="faq-item">
