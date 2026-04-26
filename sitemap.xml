@@ -1,531 +1,264 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Home -->
   <url>
     <loc>https://local-llm.org/</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>daily</changefreq>
+    <changefreq>monthly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/" />
   </url>
+
+  <!-- Static pages -->
   <url>
     <loc>https://local-llm.org/about.html</loc>
     <lastmod>2026-04-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/about.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/about.html" />
   </url>
   <url>
     <loc>https://local-llm.org/faq.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/faq.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/faq.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/contact.html</loc>
     <lastmod>2026-04-26</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/contact.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/contact.html" />
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/privacy-policy.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/privacy-policy.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/privacy-policy.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/terms-of-service.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/terms-of-service.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/terms-of-service.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/cookie-policy.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/cookie-policy.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/cookie-policy.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
+  <url>
+    <loc>https://local-llm.org/404.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Tools -->
   <url>
     <loc>https://local-llm.org/tools/index.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/index.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/index.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/tools/vllm-generator.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/vllm-generator.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/vllm-generator.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/tools/memory-calculator.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/memory-calculator.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/memory-calculator.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/tools/cost-calculator.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/cost-calculator.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/cost-calculator.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/tools/deployment-errors.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/deployment-errors.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/deployment-errors.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/tools/deployment-advisor.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/deployment-advisor.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/deployment-advisor.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
+
+  <!-- Articles -->
   <url>
     <loc>https://local-llm.org/posts/index.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/index.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/index.html" />
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/posts/cloudflare-tunnel-common-issues.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/deploy-qwen3-235b-failure.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/cloudflare-tunnel-common-issues.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/cloudflare-tunnel-common-issues.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/cloudflare-tunnel-local-ai.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/vllm-vs-ollama-3months.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/cloudflare-tunnel-local-ai.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/cloudflare-tunnel-local-ai.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/deploy-qwen36-full-guide.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/vram-lie-full-context.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/deploy-qwen36-full-guide.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/deploy-qwen36-full-guide.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/docker-deploy-ai-service.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/gpustack-zero-to-api.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/docker-deploy-ai-service.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/docker-deploy-ai-service.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/docker-pull-failure-solutions.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/expose-local-llm-safely.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/docker-pull-failure-solutions.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/docker-pull-failure-solutions.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/gpu-oom-optimization.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/cloud-to-local-cost-breakdown.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/gpu-oom-optimization.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/gpu-oom-optimization.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/gpustack-getting-started.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/vllm-oom-debug-log.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/gpustack-getting-started.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/gpustack-getting-started.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/lobechat-connect-local-model.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/docker-vllm-checklist.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/lobechat-connect-local-model.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/lobechat-connect-local-model.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/local-chatgpt-system-guide.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/lobechat-local-model.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/local-chatgpt-system-guide.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/local-chatgpt-system-guide.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/local-model-expose-api-guide.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/quantization-tradeoffs.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/local-model-expose-api-guide.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/local-model-expose-api-guide.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/local-model-slow-performance-fix.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/cloudflare-tunnel-issues.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/local-model-slow-performance-fix.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/local-model-slow-performance-fix.html" />
   </url>
   <url>
-    <loc>https://local-llm.org/posts/local-vs-cloud-model.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://local-llm.org/posts/local-chatgpt-stack.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/local-vs-cloud-model.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/local-vs-cloud-model.html" />
   </url>
+
+  <!-- Chinese pages -->
   <url>
-    <loc>https://local-llm.org/posts/max-model-len-best-practice.html</loc>
-    <lastmod>2026-04-23</lastmod>
+    <loc>https://local-llm.org/zh/</loc>
+    <lastmod>2026-04-26</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/max-model-len-best-practice.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/max-model-len-best-practice.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/posts/qwen-context-overflow-fix.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/qwen-context-overflow-fix.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/qwen-context-overflow-fix.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/posts/qwen-disable-thinking-mode.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/qwen-disable-thinking-mode.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/qwen-disable-thinking-mode.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/posts/qwen36-vs-qwen3coder.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/qwen36-vs-qwen3coder.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/qwen36-vs-qwen3coder.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/posts/vllm-deploy-llm-step-by-step.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/vllm-deploy-llm-step-by-step.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/vllm-deploy-llm-step-by-step.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/posts/vllm-startup-failure-fix.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/vllm-startup-failure-fix.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/vllm-startup-failure-fix.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/posts/vllm-vs-ollama-comparison.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/vllm-vs-ollama-comparison.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/vllm-vs-ollama-comparison.html" />
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/zh/about.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/about.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/about.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/contact.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/contact.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/contact.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/cookie-policy.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/cookie-policy.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/cookie-policy.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/zh/faq.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/faq.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/faq.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/zh/index.html</loc>
+    <loc>https://local-llm.org/zh/contact.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/index.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/index.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/zh/posts/cloudflare-tunnel-common-issues.html</loc>
+    <loc>https://local-llm.org/zh/privacy-policy.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/cloudflare-tunnel-common-issues.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/cloudflare-tunnel-common-issues.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/zh/posts/cloudflare-tunnel-local-ai.html</loc>
+    <loc>https://local-llm.org/zh/terms-of-service.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/cloudflare-tunnel-local-ai.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/cloudflare-tunnel-local-ai.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/zh/posts/deploy-qwen36-full-guide.html</loc>
+    <loc>https://local-llm.org/zh/cookie-policy.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/deploy-qwen36-full-guide.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/deploy-qwen36-full-guide.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/zh/posts/docker-deploy-ai-service.html</loc>
+    <loc>https://local-llm.org/zh/404.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/docker-deploy-ai-service.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/docker-deploy-ai-service.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/zh/posts/docker-pull-failure-solutions.html</loc>
+    <loc>https://local-llm.org/zh/tools/index.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/docker-pull-failure-solutions.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/docker-pull-failure-solutions.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/zh/posts/gpu-oom-optimization.html</loc>
+    <loc>https://local-llm.org/zh/tools/vllm-generator.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/gpu-oom-optimization.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/gpu-oom-optimization.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/zh/posts/gpustack-getting-started.html</loc>
+    <loc>https://local-llm.org/zh/tools/memory-calculator.html</loc>
     <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/gpustack-getting-started.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/gpustack-getting-started.html" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://local-llm.org/zh/tools/cost-calculator.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://local-llm.org/zh/tools/deployment-errors.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://local-llm.org/zh/tools/deployment-advisor.html</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://local-llm.org/zh/posts/index.html</loc>
     <lastmod>2026-04-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/index.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/index.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/lobechat-connect-local-model.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/lobechat-connect-local-model.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/lobechat-connect-local-model.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/local-chatgpt-system-guide.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/local-chatgpt-system-guide.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/local-chatgpt-system-guide.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/local-model-expose-api-guide.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/local-model-expose-api-guide.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/local-model-expose-api-guide.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/local-model-slow-performance-fix.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/local-model-slow-performance-fix.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/local-model-slow-performance-fix.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/local-vs-cloud-model.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/local-vs-cloud-model.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/local-vs-cloud-model.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/max-model-len-best-practice.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/max-model-len-best-practice.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/max-model-len-best-practice.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/qwen-context-overflow-fix.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/qwen-context-overflow-fix.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/qwen-context-overflow-fix.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/qwen-disable-thinking-mode.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/qwen-disable-thinking-mode.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/qwen-disable-thinking-mode.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/qwen36-vs-qwen3coder.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/qwen36-vs-qwen3coder.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/qwen36-vs-qwen3coder.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/vllm-deploy-llm-step-by-step.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/vllm-deploy-llm-step-by-step.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/vllm-deploy-llm-step-by-step.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/vllm-startup-failure-fix.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/vllm-startup-failure-fix.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/vllm-startup-failure-fix.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/posts/vllm-vs-ollama-comparison.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/posts/vllm-vs-ollama-comparison.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/posts/vllm-vs-ollama-comparison.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/privacy-policy.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/privacy-policy.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/privacy-policy.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/terms-of-service.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/terms-of-service.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/terms-of-service.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/tools/cost-calculator.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/cost-calculator.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/cost-calculator.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/tools/deployment-advisor.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/deployment-advisor.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/deployment-advisor.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/tools/deployment-errors.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/deployment-errors.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/deployment-errors.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/tools/index.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/index.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/index.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/tools/memory-calculator.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/memory-calculator.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/memory-calculator.html" />
-  </url>
-  <url>
-    <loc>https://local-llm.org/zh/tools/vllm-generator.html</loc>
-    <lastmod>2026-04-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://local-llm.org/tools/vllm-generator.html" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://local-llm.org/zh/tools/vllm-generator.html" />
   </url>
 </urlset>
