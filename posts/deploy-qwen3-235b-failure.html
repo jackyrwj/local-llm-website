@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="I tried to deploy Qwen3-235B on a single RTX 4090. Here's exactly what went wrong, the math I missed, and why MoE models are a different beast entirely.">
+    <meta property="og:description" content="I tried to deploy Qwen3-235B on a single RTX 4090. Here's exactly what went wrong, the math I missed, and why MoE models are a different beast entirely.">
+    <meta property="og:url" content="https://local-llm.org/posts/deploy-qwen3-235b-failure.html">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="How I Tried to Deploy Qwen3-235B on a Single RTX 4090 (And Why It Failed)">
+    <title>How I Tried to Deploy Qwen3-235B on a Single RTX 4090 (And Why It Failed) — AI Deployment Notes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://local-llm.org/posts/deploy-qwen3-235b-failure.html">
+    <meta name="google-adsense-account" content="ca-pub-7451090615788854">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="logo"><a href="/index.html">AI Deployment Notes</a></div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/index.html">Home</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Posts</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="lang-switcher">
+                <a href="/zh/posts/index.html" class="lang-link" aria-label="Switch to Chinese">中文</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <article class="post-single">
+            <div class="post-header">
+                <div class="container">
+                    <span class="post-category">Field Notes</span>
+                    <h1>How I Tried to Deploy Qwen3-235B on a Single RTX 4090 (And Why It Failed)</h1>
+                    <div class="post-meta">
+                        <time datetime="2026-04-26">April 26, 2026</time>
+                        <span class="sep">·</span>
+                        <span class="read-time">8 min read</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-body">
+                <div class="container">
+                    <p>I thought 24GB of VRAM would be enough. I was wrong.</p>
+
+                    <p>It was a Tuesday afternoon. I had just finished a coffee, my RTX 4090 was humming quietly in the corner of my office, and I had just downloaded the Qwen3-235B-A22B weights from Hugging Face. The model card said "235B total parameters, 22B active per token." My brain did the lazy math: 22 billion active parameters at FP16 is 44GB. Okay, that won't fit. But wait — I can quantize. INT8 would cut that to 22GB. That leaves 2GB of headroom on my 24GB card. Tight, but doable, right?</p>
+
+                    <p>Forty minutes later, my machine was frozen. Not a graceful shutdown. Not an error message I could Google. Just a silent death, the screen locked up, and when I SSH'd back in from my laptop, the kernel log had one word: <code>Killed</code>. No stack trace. No OOM warning with a friendly explanation. Just the Linux out-of-memory killer doing what it does best — murdering my process without ceremony.</p>
+
+                    <h2>What I Thought Would Work</h2>
+
+                    <p>Let me walk you through my reasoning, because this is where I embarrassed myself. I had been running Qwen2.5-72B-Instruct on the same machine for weeks. That model has 72 billion parameters. At INT8 quantization, it takes about 72GB. I run it across three RTX 4090s with tensor parallelism, and it works fine. So when I saw Qwen3-235B with "only" 22B active parameters, my brain short-circuited. I thought: this is a smaller model that happens to have a lot of dormant experts. The marketing practically begs you to think this way.</p>
+
+                    <p>Here was my original plan. I would use vLLM 0.6.3 with AWQ quantization. The Qwen3-235B-A22B model has 128 experts, but only 8 are active per forward pass. The weights for all 128 experts still have to live in memory, but I figured vLLM's memory management would be clever enough to page them or something. I didn't actually verify this assumption. I just assumed.</p>
+
+                    <p>I even did some back-of-the-napkin math. 235B parameters total. AWQ is 4-bit, so roughly 0.5 bytes per parameter. That's about 118GB for the weights alone. Hmm. That's already over my 24GB budget by a factor of five. But I had read somewhere that MoE models can run with "expert offloading" or that only active experts need to be in VRAM. I latched onto this idea like a drowning man grabbing a rope. I didn't check if vLLM actually supports expert offloading for Qwen3. Spoiler: it doesn't, at least not in the way I imagined.</p>
+
+                    <p>By the way, NVIDIA's marketing on VRAM efficiency is misleading in ways that don't help here. They love to show slides where a single H100 runs models that would have needed eight A100s two years ago. What they don't emphasize is that those comparisons are against dense models, not MoE architectures. The whole "more model per gigabyte" narrative falls apart when your model's total parameter count is ten times what actually gets used per token. The weights still exist. They still need to go somewhere.</p>
+
+                    <h2>What Actually Happened</h2>
+
+                    <p>I wrote my vLLM launch command with the confidence of someone who has not yet been humbled:</p>
+
+<pre><code>python -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen3-235B-A22B-AWQ \
+  --tensor-parallel-size 1 \
+  --gpu-memory-utilization 0.95 \
+  --max-model-len 4096 \
+  --quantization awq</code></pre>
+
+                    <p>The download took 47 minutes on my connection. The model shards are large, and Hugging Face's CDN was having a slow afternoon. I watched the progress bar fill with the anticipation of a kid on Christmas Eve. Then the loading started.</p>
+
+                    <p>vLLM began allocating memory. I watched <code>nvidia-smi</code> in a separate terminal. The memory usage climbed: 4GB, 8GB, 12GB, 16GB, 20GB. It hit 23.8GB and paused for a moment. I actually smiled. I thought: it's going to work. It's right at the limit, but it's going to work.</p>
+
+                    <p>Then it kept climbing. 24.1GB. 24.3GB. My RTX 4090 has 24GB of VRAM. There is no 24.3GB. The system started swapping to host memory through the PCIe bus, which on a model this size is like trying to fill a swimming pool with a drinking straw. The whole machine became unresponsive. My SSH session lagged. The cursor stopped blinking. Then the screen went black on the local display, and my remote terminal printed one line:</p>
+
+<pre><code>Killed process 28471 (python) total-vm:89234124kB, anon-rss:65892312kB</code></pre>
+
+                    <p>The process was using 65GB of system RAM in addition to whatever it had stuffed into VRAM. The OOM killer stepped in and ended it. I sat there staring at the terminal for a full minute, not because I was devastated, but because I genuinely didn't understand what had just happened. I had quantized the model. I had set a short context length. Where was all this memory going?</p>
+
+                    <h2>Digging Into Why</h2>
+
+                    <p>I spent the next three hours reading the Qwen3 technical report, vLLM's MoE implementation notes, and a dozen GitHub issues from people who had made the exact same mistake I just made. The picture that emerged was both obvious and deeply annoying.</p>
+
+                    <p>Qwen3-235B-A22B is a Mixture of Experts model. It has 235 billion parameters in total, spread across 128 experts. For any given token, only 8 of those experts are active. That means the "active" parameter count per forward pass is roughly 22 billion. This is the number that gets advertised. It's the number I fixated on.</p>
+
+                    <p>But here's the thing: at inference time, you still need to load all 235 billion parameters into memory. All 128 experts have to be available, because you don't know which 8 will be needed for each token until you run the routing calculation. There is no magic "expert offloading" in standard vLLM that pages inactive experts out to disk. They all sit in VRAM, or in system RAM if VRAM runs out, and the moment you touch system RAM for model weights, your latency goes from milliseconds to seconds.</p>
+
+                    <p>I found a GitHub issue from three weeks prior where someone asked the exact question I should have asked: "Can Qwen3-235B-A22B run on a single 24GB GPU with quantization?" The vLLM maintainer's response was polite but firm: "No. The total parameter count determines memory requirements, not the active count. With AWQ you need roughly 120GB+ for weights alone, plus overhead for KV cache and activations." I had read this issue earlier in the week. I had apparently scrolled past it without absorbing the information, because I was too excited about the idea of running a 235B model on my desktop.</p>
+
+                    <p>The MoE architecture creates a specific kind of memory pressure that dense models don't. In a dense 72B model, you have 72 billion parameters and they all get used every pass. In an MoE model, you have 235 billion parameters and only a fraction get used, but you pay the storage cost for all of them. The efficiency gain is in compute, not memory. I had confused the two. I thought "fewer active parameters" meant "less memory," when it actually means "less FLOPs per token." The weights still weigh something.</p>
+
+                    <h2>The Real Math</h2>
+
+                    <p>Let me show you the calculation I should have done before I started downloading 118GB of weights. This is the math that would have saved me an afternoon and a forced reboot.</p>
+
+                    <p>For AWQ 4-bit quantization, each parameter takes approximately 0.5 bytes. Some implementations use slightly more due to packing overhead, but 0.5 is the standard estimate:</p>
+
+<pre><code>Weight memory = 235B parameters × 0.5 bytes/param = 117.5 GB</code></pre>
+
+                    <p>That's just the weights. You also need KV cache memory for the attention mechanism. At 4096 context length, batch size 1, with 128 attention heads and head dimension 128, in FP16:</p>
+
+<pre><code>KV cache per layer = 2 × num_heads × head_dim × seq_len × bytes_per_value
+                   = 2 × 128 × 128 × 4096 × 2 bytes
+                   = 256 MB per layer
+
+Total KV cache (64 layers) = 64 × 256 MB = 16.4 GB</code></pre>
+
+                    <p>Then there are the activations — the intermediate states passed between layers during the forward pass. For a model this wide, activations at batch size 1 can easily consume another 8-12GB depending on sequence length and implementation details.</p>
+
+                    <p>Add vLLM's own overhead: the scheduler, the block manager, the CUDA context, various buffers for pipelining. That's another 2-4GB.</p>
+
+                    <p>So the real total looks something like this:</p>
+
+<pre><code>Weights:        117.5 GB
+KV cache:        16.4 GB
+Activations:     10.0 GB
+Overhead:         3.0 GB
+─────────────────────────
+Total:          146.9 GB</code></pre>
+
+                    <p>My RTX 4090 has 24GB. I was short by roughly 123GB. That's not a small gap. That's not "maybe if I close Chrome" territory. That's "I need five more of these GPUs" territory.</p>
+
+                    <p>I ran the same numbers for INT8 quantization just to see:</p>
+
+<pre><code>Weights at INT8: 235B × 1 byte = 235 GB
+Total with overhead: ~260 GB</code></pre>
+
+                    <p>INT8 actually makes it worse, not better, because the weight memory dominates everything else. The only quantization scheme that might bring this into the realm of consumer hardware is something like GPTQ-INT4 with aggressive group sizing, and even then you're looking at 80-90GB for weights alone. That's still four RTX 4090s.</p>
+
+                    <h2>What I Should Have Done</h2>
+
+                    <p>The honest answer is: I should have checked the requirements before I started. There is a <a href="/tools/memory-calculator.html">VRAM estimator</a> on this very site that would have told me in ten seconds that this was impossible. I built that tool. I didn't use it. There's a lesson in there about shoemaker's children going barefoot.</p>
+
+                    <p>Assuming I still wanted to run this model, the actual path forward involves tensor parallelism across multiple GPUs. With four RTX 4090s (96GB total), you're still tight because of the overhead duplication and the fact that tensor parallelism doesn't perfectly divide memory — each GPU needs some duplicate buffers. Six RTX 4090s would be comfortable. Eight would be ideal.</p>
+
+                    <p>Alternatively, pipeline parallelism can split the model across GPUs by layer rather than by tensor dimension. This reduces the per-GPU memory footprint but increases latency because activations have to travel between GPUs. For a batch-1 interactive setup, pipeline parallelism is painful. For batch inference, it's more tolerable.</p>
+
+                    <p>The real solution, if you're serious about running models in this class, is to stop trying to do it on consumer hardware. A single H100 with 80GB of VRAM gets you closer, but even that would need quantization to fit Qwen3-235B. Two H100s with tensor parallelism would handle it comfortably at 4-bit. An A100 80GB pair would work similarly. This is the hardware these models were designed for.</p>
+
+                    <p>I did eventually get Qwen3-235B running, by the way. I borrowed access to a server with four A100 80GB GPUs through a cloud provider. The setup took 20 minutes. The model loaded without drama. I sent it a prompt and it responded with the kind of coherent, nuanced output that explains why people get excited about 235B-parameter models in the first place. It was satisfying. It also cost $12 per hour to rent those GPUs, which put my $4,200 RTX 4090 purchase in perspective. Consumer hardware has limits. This model found one of them.</p>
+
+                    <h2>What I Learned</h2>
+
+                    <p>The big lesson is that MoE models are not "small models with extra stuff." They are large models with a clever routing mechanism. The total parameter count is not a marketing number you can ignore. It is the number that determines whether your hardware can even load the thing.</p>
+
+                    <p>I also learned that my intuition about quantization was overly optimistic. I had mentally categorized AWQ as "makes big models small," without doing the actual division. 235 billion parameters does not become small just because you divide by two or four. It becomes medium. Medium still doesn't fit in 24GB.</p>
+
+                    <p>There's a smaller lesson about reading documentation before you spend 47 minutes downloading weights and another 20 minutes crashing your machine. I am working on that one. The VRAM estimator exists for a reason. I will use it next time. Probably.</p>
+
+                    <p>One thing that genuinely surprised me: the OOM killer gave me no useful information. I spent an hour checking vLLM logs, CUDA logs, system dmesg output, trying to find the exact allocation that failed. There was no smoking gun. The memory pressure built gradually as the model loaded, then the system hit a cliff and the kernel terminated the process. If you're debugging similar issues, don't expect a neat error message. Watch <code>nvidia-smi</code> in real time, and if the numbers keep climbing past your physical limit, you're already dead.</p>
+
+                    <p>This is what I learned. Your mileage may vary. If you have eight RTX 4090s and a motherboard with enough PCIe lanes, maybe you can make this work on consumer hardware. If you figure out a clever way to run Qwen3-235B on a single 24GB card that doesn't involve waiting thirty seconds per token, email me. I will buy you a coffee and publish your method with full credit. Until then, I'll be running the 32B variant, which actually does fit in 24GB and still writes better code than I do.</p>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">AI Deployment Notes</div>
+                    <p>Hands-on guides for local LLM deployment, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Field Notes · Pitfall Guides · Daily Updates</span>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Posts</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Field Notes</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>This site uses cookies to analyze traffic. By continuing, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

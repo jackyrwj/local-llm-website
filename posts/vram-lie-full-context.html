@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Why a 7B model needs far more than 14GB of VRAM at long context. A deep dive into KV cache, activations, CUDA overhead, and the real memory math behind LLM inference.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="The VRAM Lie: Why Your 24GB GPU Cannot Run a 7B Model at Full Context — AI Deployment Notes">
+    <meta property="og:description" content="Why a 7B model needs far more than 14GB of VRAM at long context. A deep dive into KV cache, activations, CUDA overhead, and the real memory math behind LLM inference.">
+    <meta property="og:url" content="https://local-llm.org/posts/vram-lie-full-context.html">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>The VRAM Lie: Why Your 24GB GPU Cannot Run a 7B Model at Full Context — AI Deployment Notes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://local-llm.org/posts/vram-lie-full-context.html">
+    <meta name="google-adsense-account" content="ca-pub-7451090615788854">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "The VRAM Lie: Why Your 24GB GPU Cannot Run a 7B Model at Full Context",
+      "description": "Why a 7B model needs far more than 14GB of VRAM at long context. A deep dive into KV cache, activations, CUDA overhead, and the real memory math behind LLM inference.",
+      "datePublished": "2026-04-26",
+      "author": {"@type": "Organization", "name": "AI Deployment Notes"},
+      "publisher": {"@type": "Organization", "name": "AI Deployment Notes"},
+      "articleSection": "Deep Dive",
+      "inLanguage": "en"
+    }
+    </script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo"><a href="/index.html">AI Deployment Notes</a></div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/index.html">Home</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Posts</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="lang-switcher">
+                <a href="/zh/posts/vram-lie-full-context.html" class="lang-link" aria-label="Switch to Chinese">中文</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <article>
+            <header class="post-header">
+                <div class="container">
+                    <span class="post-category cat-cmp">Deep Dive</span>
+                    <h1>The VRAM Lie: Why Your 24GB GPU Cannot Run a 7B Model at Full Context</h1>
+                    <div class="post-meta">
+                        <time datetime="2026-04-26">April 26, 2026</time>
+                        <span>·</span>
+                        <span class="read-time">8 min read</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="post-body">
+                <div class="container">
+
+<p>The math is simple: 7B parameters &times; 2 bytes = 14GB. So why does my 24GB card run out of memory at 8K context?</p>
+
+<p>I have watched this exact scenario play out in Discord servers, GitHub issues, and Reddit threads at least a hundred times. Someone buys an RTX 4090, reads that a 7B model in FP16 is "only" 14GB, and assumes they have 10GB of headroom. Then they fire up vLLM with <code>--max-model-len 32768</code>, paste a long document, and the process dies with a CUDA out-of-memory error. The reaction is always the same: confusion, then anger, then the sinking realization that the GPU box lied to them.</p>
+
+<p>It is not a lie, exactly. It is an omission. The parameter count tells you how much memory the weights need. It does not tell you about the KV cache, the activation buffers, the CUDA context overhead, or the memory fragmentation that happens when you actually try to serve requests. This article is the full accounting.</p>
+
+<h2>The Simple Math Everyone Knows</h2>
+
+<p>Let us start with the part that is actually simple. A 7B parameter model stored in 16-bit floating point (FP16 or BF16) needs:</p>
+
+<pre><code>7,000,000,000 parameters &times; 2 bytes = 14,000,000,000 bytes &approx; 13.0 GiB</code></pre>
+
+<p>If you quantize to INT8, you halve that. If you go to INT4, you halve it again. This is the number that gets printed on model cards, benchmark tables, and Reddit comments. It is also the number that misleads people into thinking they can run anything on anything.</p>
+
+<p>The problem is that this 13 GiB is just the <em>weights</em>. It is the model's long-term memory, burned into the file you downloaded from Hugging Face. When you actually run inference, the GPU needs a lot more working memory. Think of it like this: the weights are the engine block, but you still need coolant, fuel lines, and an exhaust system. You cannot drive an engine block.</p>
+
+<h2>The Hidden Memory Consumers</h2>
+
+<p>Here is where the bill starts adding up. During inference, VRAM is consumed by four main categories beyond the weights themselves.</p>
+
+<h3>1. The KV Cache</h3>
+
+<p>This is the big one. When a transformer processes a sequence, it computes key and value vectors for every token. For efficiency, it stores these so it does not recompute them for every new token. That stored data is the KV cache, and it grows linearly with context length.</p>
+
+<p>The formula for KV cache memory is:</p>
+
+<pre><code>KV_cache = 2 &times; num_layers &times; num_heads &times; head_dim &times; seq_len &times; batch_size &times; bytes_per_param</code></pre>
+
+<p>For a typical 7B model (32 layers, 32 heads, 128 head dim, FP16):</p>
+
+<pre><code>Per token: 2 &times; 32 &times; 32 &times; 128 &times; 2 bytes = 524,288 bytes &approx; 0.5 MB per token
+
+At 4K context:  4,096 &times; 0.5 MB = 2,048 MB &approx; 2.0 GiB
+At 8K context:  8,192 &times; 0.5 MB = 4,096 MB &approx; 4.0 GiB
+At 32K context: 32,768 &times; 0.5 MB = 16,384 MB &approx; 16.0 GiB</code></pre>
+
+<p>Notice what just happened. At 32K context, the KV cache alone is larger than the model weights. Your 13 GiB model just became a 29 GiB model, and we have not even counted the other stuff yet.</p>
+
+<p>Some newer architectures use grouped-query attention (GQA), which reduces the number of key-value heads and shrinks the KV cache. A model with GQA might use only 8 KV heads instead of 32, cutting the cache by 75%. But most 7B models on Hugging Face still use standard multi-head attention, so the full formula applies.</p>
+
+<h3>2. Activation Memory</h3>
+
+<p>Every layer produces intermediate tensors during the forward pass. These activations are not stored permanently like the KV cache, but they do occupy VRAM while the layer is computing. For a 7B model processing a batch, activation memory typically ranges from 1-3 GiB depending on batch size and sequence length.</p>
+
+<p>The exact amount varies by framework. vLLM usesPagedAttention to reduce activation waste, but it still needs working buffers. Ollama and llama.cpp have different allocation strategies. The point is: there is no such thing as zero activation memory.</p>
+
+<h3>3. CUDA Overhead and Framework Buffers</h3>
+
+<p>CUDA itself eats a chunk of VRAM before you even load a model. The CUDA context, cuBLAS handles, and driver overhead typically consume 300-800 MB. Then your inference framework (vLLM, TGI, llama.cpp) allocates its own management structures, request queues, and scratch buffers.</p>
+
+<p>vLLM specifically allocates a "workspace" for PagedAttention block tables. This is usually 5-10% of total VRAM. On a 24GB card, that is another 1-2 GB that disappears before you serve a single token.</p>
+
+<h3>4. Memory Fragmentation</h3>
+
+<p>This is the silent killer. GPUs allocate memory in contiguous chunks. When you have a 13 GiB weight block, a 4 GiB KV cache, and a bunch of smaller activation buffers, the allocator starts leaving gaps. Over time, especially with variable-length requests, you end up with plenty of free VRAM but no single chunk large enough to satisfy a new allocation. The result is an OOM error even though <code>nvidia-smi</code> says you have 2 GB free.</p>
+
+<p>vLLM mitigates this with its block-table approach, but fragmentation still happens. Other frameworks are worse. I have seen llama.cpp report 1.5 GB of "free" memory while failing to allocate a 512 MB tensor.</p>
+
+<h2>Real Calculation: A 7B Model at Different Context Lengths</h2>
+
+<p>Let us put it all together. Here is the actual VRAM budget for a standard 7B model (Llama-2-7B, FP16) on a single GPU, using vLLM with a batch size of 1:</p>
+
+<pre><code>Component          | 4K context | 8K context | 32K context
+-------------------|------------|------------|-------------
+Model weights      | 13.0 GiB   | 13.0 GiB   | 13.0 GiB
+KV cache           |  2.0 GiB   |  4.0 GiB   | 16.0 GiB
+Activations        |  1.2 GiB   |  1.8 GiB   |  3.5 GiB
+CUDA + framework   |  1.5 GiB   |  1.5 GiB   |  1.5 GiB
+Fragmentation pad  |  0.5 GiB   |  0.8 GiB   |  2.0 GiB
+-------------------|------------|------------|-------------
+TOTAL              | 18.2 GiB   | 21.1 GiB   | 36.0 GiB</code></pre>
+
+<p>At 4K context, your 24GB RTX 4090 is fine. At 8K, you have about 3 GB of breathing room, which feels safe until you remember that batch size 1 is not how anyone actually uses these models. Bump the batch size to 4, and the KV cache quadruples. At 8K context with batch size 4, you are at roughly 33 GiB. Your 24GB card is dead.</p>
+
+<p>At 32K context, even batch size 1 exceeds 24GB. You need a 48GB A6000 or a dual-GPU setup just to run a 7B model at full context. This is the reality that the "7B = 14GB" meme hides.</p>
+
+<h2>Why Quantization Does Not Always Save as Much as You Think</h2>
+
+<p>"Just quantize to 4-bit" is the standard reply to any VRAM complaint. And yes, quantization helps. But the savings are not as dramatic as the parameter math suggests, because the KV cache does not shrink.</p>
+
+<p>Here is the same table for an INT4-quantized 7B model:</p>
+
+<pre><code>Component          | 4K context | 8K context | 32K context
+-------------------|------------|------------|-------------
+Model weights      |  3.5 GiB   |  3.5 GiB   |  3.5 GiB
+KV cache (FP16)    |  2.0 GiB   |  4.0 GiB   | 16.0 GiB
+Activations        |  1.2 GiB   |  1.8 GiB   |  3.5 GiB
+CUDA + framework   |  1.5 GiB   |  1.5 GiB   |  1.5 GiB
+Fragmentation pad  |  0.5 GiB   |  0.8 GiB   |  2.0 GiB
+-------------------|------------|------------|-------------
+TOTAL              |  8.7 GiB   | 11.6 GiB   | 26.5 GiB</code></pre>
+
+<p>At 4K and 8K, quantization is transformative. You can run on a 12GB card. But at 32K context, you still need more than 24GB because the KV cache is unchanged. The weights went from 13 GB to 3.5 GB, but the total only dropped from 36 GB to 26.5 GB. The KV cache dominates at long context, and quantization does not touch it.</p>
+
+<p>There is research into KV cache quantization (INT8 KV cache, cache eviction, streaming attention), but most production frameworks do not implement it yet. As of early 2026, if you want 32K context on a consumer GPU, you need either GQA architecture, KV cache compression, or a smaller model.</p>
+
+<h2>A Practical Rule of Thumb</h2>
+
+<p>After deploying dozens of models across different hardware, here is the heuristic I use:</p>
+
+<blockquote>
+<p>For FP16 inference, budget <strong>2.5x the model weight size</strong> for 4K context, <strong>3x for 8K</strong>, and <strong>5x for 32K+</strong>. For INT4, use <strong>1.5x, 2x, and 4x</strong> respectively.</p>
+</blockquote>
+
+<p>So a 7B model in FP16:</p>
+<ul>
+<li>4K context: 13 &times; 2.5 = 32.5 GB needed for comfortable operation</li>
+<li>8K context: 13 &times; 3 = 39 GB</li>
+<li>32K context: 13 &times; 5 = 65 GB</li>
+</ul>
+
+<p>Wait, those numbers are higher than my table above. That is because the table assumed batch size 1 and a perfectly efficient allocator. In practice, you want headroom. You want to handle occasional spikes. You do not want your server dying because one user pasted a slightly longer prompt than usual.</p>
+
+<p>These multipliers also account for the fact that you are rarely running at batch size 1 in production. Even a "personal" server usually has 2-4 concurrent requests. The multipliers bake in a small batch size.</p>
+
+<h3>Caveats</h3>
+
+<ul>
+<li><strong>GQA models</strong> (like Mistral, some Qwen variants) have smaller KV caches. You can use 0.6-0.7x the multiplier.</li>
+<li><strong>Multi-GPU tensor parallelism</strong> splits weights but replicates the KV cache per GPU. Two 24GB cards do not give you 48GB of usable KV cache space. Use pipeline parallelism or sequence parallelism if you need to scale context across GPUs.</li>
+<li><strong>CPU offloading</strong> (llama.cpp, Ollama) lets you exceed GPU VRAM by paging layers to system RAM. It works, but latency spikes dramatically. Do not use it for real-time APIs.</li>
+<li><strong>FlashAttention</strong> reduces activation memory but not KV cache size. It is worth enabling, but it will not save you from the long-context cliff.</li>
+</ul>
+
+<h2>Tools to Estimate Before You Deploy</h2>
+
+<p>Do not guess. Use tools that actually compute this stuff.</p>
+
+<p><strong>1. Our <a href="/tools/memory-calculator.html">VRAM Estimator</a></strong> — Built specifically for local LLM deployment. Input your model size, quantization, context length, and batch size. It breaks down weights, KV cache, activations, and overhead separately. It also flags when your chosen GPU is insufficient and suggests alternatives.</p>
+
+<p><strong>2. vLLM's built-in profiler</strong> — Start vLLM with <code>--max-model-len</code> set to your target, then monitor with <code>nvidia-smi</code> during a warmup request. The memory usage you see after the first forward pass is your baseline. Multiply by 1.2 for headroom.</p>
+
+<p><strong>3. The <code>transformers</code> memory calculator</strong> — Hugging Face has a <a href="https://huggingface.co/docs/transformers/model_memory">model memory calculator</a> that estimates training and inference memory. It is conservative (assumes full backprop buffers even for inference), but it will not undercount.</p>
+
+<p><strong>4. Manual KV cache calculation</strong> — If you want to verify the math yourself, inspect the model config for <code>num_hidden_layers</code>, <code>num_key_value_heads</code> (or <code>num_attention_heads</code>), and <code>hidden_size</code>. Divide hidden_size by num_attention_heads to get head_dim. Then plug into the formula above.</p>
+
+<p>Here is a quick Python snippet:</p>
+
+<pre><code>def kv_cache_gb(layers, kv_heads, head_dim, seq_len, batch=1, dtype_bytes=2):
+    bytes_per_token = 2 * layers * kv_heads * head_dim * dtype_bytes
+    total = bytes_per_token * seq_len * batch
+    return total / (1024**3)
+
+# Llama-2-7B: 32 layers, 32 heads, 128 head dim
+print(kv_cache_gb(32, 32, 128, 8192))   # ~4.0 GiB
+print(kv_cache_gb(32, 32, 128, 32768))  # ~16.0 GiB
+
+# Mistral-7B with GQA: 32 layers, 8 KV heads, 128 head dim
+print(kv_cache_gb(32, 8, 128, 32768))   # ~4.0 GiB (75% smaller!)</code></pre>
+
+<h2>The Bottom Line</h2>
+
+<p>The GPU manufacturers and the model publishers are not trying to deceive you. They report the numbers that are easy to measure and compare. But easy comparisons are not operational reality.</p>
+
+<p>If you are planning a deployment, do not stop at "7B = 14GB." That is where the analysis starts, not where it ends. Work through the KV cache formula for your target context length. Add activation buffers. Add CUDA overhead. Add fragmentation padding. Then add 20% more because production is never as clean as a spreadsheet.</p>
+
+<p>The 24GB RTX 4090 is an incredible card. It can run a 7B model at 4K context with room to spare. It can even handle 8K if you are careful with batch size. But 32K context? That is not a 7B model problem. That is a <em>hardware</em> problem, and no amount of forum optimism will change the math.</p>
+
+<p>Know the numbers before you buy the hardware. Or at least before you promise your users a context window your GPU cannot deliver.</p>
+
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">AI Deployment Notes</div>
+                    <p>Hands-on guides for local LLM deployment, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Field Notes · Pitfall Guides · Daily Updates</span>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Posts</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Field Notes</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>This site uses cookies to analyze traffic. By continuing, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

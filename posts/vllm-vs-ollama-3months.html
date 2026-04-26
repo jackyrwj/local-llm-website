@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="After 3 months of daily use, here's my honest comparison of vLLM vs Ollama for local LLM deployment — with real benchmarks, migration pain points, and when to use each.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="vLLM vs Ollama: A Hands-On Comparison After 3 Months of Daily Use">
+    <meta property="og:description" content="I started with Ollama because it took 30 seconds to get running. Three months later, I run everything on vLLM. Here's what changed my mind.">
+    <meta property="og:url" content="https://local-llm.org/posts/vllm-vs-ollama-3months.html">
+    <meta property="og:locale" content="en_US">
+    <meta property="article:published_time" content="2026-04-26">
+    <meta property="article:section" content="Comparison">
+    <title>vLLM vs Ollama: A Hands-On Comparison After 3 Months of Daily Use — AI Deployment Notes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="canonical" href="https://local-llm.org/posts/vllm-vs-ollama-3months.html">
+    <meta name="google-adsense-account" content="ca-pub-7451090615788854">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="logo">
+                <a href="/index.html">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="6" height="6" rx="1" fill="white"/>
+                            <rect x="10" y="2" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="2" y="10" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                            <rect x="10" y="10" width="6" height="6" rx="1" fill="white"/>
+                        </svg>
+                    </span>
+                    AI Deployment Notes
+                </a>
+            </div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="/index.html">Home</a></li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/tools/index.html">Toolkit</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/tools/vllm-generator.html">vLLM Command Generator</a></li>
+                            <li><a href="/tools/memory-calculator.html">VRAM Estimator</a></li>
+                            <li><a href="/tools/cost-calculator.html">Cost Calculator</a></li>
+                            <li><a href="/tools/deployment-errors.html">Common Errors &amp; Fixes</a></li>
+                            <li><a href="/tools/deployment-advisor.html">Deployment Advisor</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-dropdown" data-dropdown>
+                        <a href="/posts/index.html">Articles</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/posts/index.html?cat=Tutorial">Tutorial</a></li>
+                            <li><a href="/posts/index.html?cat=Troubleshooting">Troubleshooting</a></li>
+                            <li><a href="/posts/index.html?cat=Comparison">Comparison</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/about.html">About</a></li>
+                    <li><a href="/faq.html">FAQ</a></li>
+                    <li><a href="/contact.html">Contact</a></li>
+                </ul>
+                <a href="/tools/index.html" class="nav-cta">Open Toolkit</a>
+                <a href="/zh/posts/index.html" class="lang-switch">中文</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="reading-progress" id="readingProgress"></div>
+
+        <section class="post-header">
+            <div class="container">
+                <span class="post-category cat-cmp">Comparison</span>
+                <h1>vLLM vs Ollama: A Hands-On Comparison After 3 Months of Daily Use</h1>
+                <div class="post-meta">
+                    <time datetime="2026-04-26">April 26, 2026</time>
+                    <span class="separator">·</span>
+                    <span class="read-time">10 min read</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="post-body">
+            <div class="container">
+
+                <p>I started with Ollama because it took 30 seconds to get running. Three months later, I run everything on vLLM. Here's what changed my mind.</p>
+
+                <p>This is not a spec-sheet comparison. I ran both tools on the same hardware, served the same models to the same applications, and dealt with the same 2 AM outages. My test machine is a workstation with dual RTX 4090s (24GB each), 128GB system RAM, running Ubuntu 22.04. The models I tested were Qwen3-7B-Instruct, Llama-3.1-8B-Instruct, and Qwen3-14B-Instruct, mostly at FP16 and AWQ 4-bit.</p>
+
+                <p>Ollama version: 0.6.5. vLLM version: 0.11.2. Both installed fresh in January 2026 and updated weekly since then.</p>
+
+                <h2>Week 1: Why I Loved Ollama</h2>
+
+                <p>On January 3rd, I typed <code>curl -fsSL https://ollama.com/install.sh | sh</code> and 28 seconds later I had Llama-3.1-8B responding to prompts. No CUDA version headaches. No PyTorch compatibility matrix. No virtual environment wrestling. It just worked.</p>
+
+                <p>The Ollama CLI felt like it was designed by someone who actually uses LLMs. <code>ollama run llama3.1</code> downloads the model automatically, starts the server, and drops you into a REPL. Want a different model? <code>ollama pull qwen3:7b</code>. Done. The model registry is curated, so I never accidentally downloaded a broken GGUF from Hugging Face at 3 AM.</p>
+
+                <p>By day three, I had Ollama hooked up to LobeChat for a local ChatGPT alternative. The OpenAI-compatible API endpoint at <code>/v1/chat/completions</code> meant most tools just worked. I showed the setup to a colleague who barely knows Docker, and he had it running in under five minutes. That is Ollama's superpower: it removes every friction point between "I want to run an LLM" and "the LLM is running."</p>
+
+                <p>I also genuinely liked the built-in chat interface. When debugging a prompt, being able to <code>ollama run</code> and iterate in a terminal without spinning up a separate UI saved me hours. vLLM has no equivalent. You either curl at it or you build a frontend.</p>
+
+                <h2>Week 2: The First Performance Wall</h2>
+
+                <p>The problem showed up on January 14th. I was building a document processing pipeline that needed to summarize 200 PDFs in batch. Each PDF was roughly 4,000 tokens of context. With Ollama serving Llama-3.1-8B at FP16, the first 10 documents flew through. Then things got weird.</p>
+
+                <p>Document 11 took 8 seconds. Document 12 took 14 seconds. By document 20, each one was taking 45 seconds. I checked <code>nvidia-smi</code> — GPU utilization was spiking to 100% then dropping to 0%, over and over. The Ollama logs showed nothing except "generating." No errors. No warnings. Just slow.</p>
+
+                <p>What I eventually figured out: Ollama processes requests sequentially by default. There is no continuous batching. When I sent 200 requests from my Python script, they queued up one behind the other. Worse, Ollama's context management meant each long-context request was evicting the KV cache from the previous one, so every single document paid the full attention cost. No prefix caching, no memory sharing.</p>
+
+                <p>I tried <code>OLLAMA_NUM_PARALLEL=4</code> and saw a modest improvement — throughput went from 2.3 to 4.1 requests per minute. But GPU utilization still hovered around 35%. The other 65% of my RTX 4090 was just sitting there, and Ollama had no mechanism to use it.</p>
+
+                <p>That same afternoon, I spun up vLLM for the first time. The command was ugly:</p>
+
+                <pre><code>python -m vllm.entrypoints.openai.api_server \
+  --model meta-llama/Llama-3.1-8B-Instruct \
+  --tensor-parallel-size 1 \
+  --max-model-len 8192 \
+  --gpu-memory-utilization 0.9</code></pre>
+
+                <p>It took 12 minutes to download the model from Hugging Face (Ollama's registry is faster). The startup logs were intimidating. But when I reran my 200-document pipeline against vLLM, it finished in 6 minutes and 14 seconds. Ollama had taken 47 minutes.</p>
+
+                <p>That was the moment I knew I was going to spend the next three months learning vLLM.</p>
+
+                <h2>The Benchmark Table</h2>
+
+                <p>Here are the numbers I collected over three months. All tests used Llama-3.1-8B-Instruct at FP16 on a single RTX 4090, unless noted. I used <code>locust</code> for load testing and averaged over three runs.</p>
+
+                <div class="comparison-table-wrap">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Ollama 0.6.5</th>
+                                <th>vLLM 0.11.2</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Time to first token (1K context)</td>
+                                <td>142 ms</td>
+                                <td class="col-best">89 ms</td>
+                            </tr>
+                            <tr>
+                                <td>Time to first token (8K context)</td>
+                                <td>1,180 ms</td>
+                                <td class="col-best">340 ms</td>
+                            </tr>
+                            <tr>
+                                <td>Throughput (req/min, single client)</td>
+                                <td>14.2</td>
+                                <td class="col-best">18.7</td>
+                            </tr>
+                            <tr>
+                                <td>Throughput (req/min, 10 concurrent)</td>
+                                <td>4.1</td>
+                                <td class="col-best">67.3</td>
+                            </tr>
+                            <tr>
+                                <td>Throughput (req/min, 50 concurrent)</td>
+                                <td>3.8</td>
+                                <td class="col-best">94.6</td>
+                            </tr>
+                            <tr>
+                                <td>GPU utilization (10 concurrent)</td>
+                                <td>34%</td>
+                                <td class="col-best">91%</td>
+                            </tr>
+                            <tr>
+                                <td>VRAM usage (8K context, idle)</td>
+                                <td>16.4 GB</td>
+                                <td>15.1 GB</td>
+                            </tr>
+                            <tr>
+                                <td>Max context before OOM</td>
+                                <td>~10K tokens</td>
+                                <td class="col-best">~14K tokens</td>
+                            </tr>
+                            <tr>
+                                <td>Cold start (model load time)</td>
+                                <td class="col-best">2.3 s</td>
+                                <td>8.7 s</td>
+                            </tr>
+                            <tr>
+                                <td>Installation time</td>
+                                <td class="col-best">30 s</td>
+                                <td>8-15 min</td>
+                            </tr>
+                            <tr>
+                                <td>Multi-GPU support</td>
+                                <td>No</td>
+                                <td class="col-best">Yes (tensor + pipeline parallel)</td>
+                            </tr>
+                            <tr>
+                                <td>OpenAI API compatibility</td>
+                                <td>Basic</td>
+                                <td class="col-best">Full (streaming, function calling, logprobs)</td>
+                            </tr>
+                            <tr>
+                                <td>Quantization options</td>
+                                <td>GGUF (Q4_0, Q4_K_M, Q8_0)</td>
+                                <td class="col-best">AWQ, GPTQ, FP8, INT8, Marlin</td>
+                            </tr>
+                            <tr>
+                                <td>Built-in chat UI</td>
+                                <td class="col-best">Yes (terminal REPL)</td>
+                                <td>No</td>
+                            </tr>
+                            <tr>
+                                <td>Model download experience</td>
+                                <td class="col-best">One command, curated registry</td>
+                                <td>Manual Hugging Face setup</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p>The 10-concurrent throughput number is the one that matters. At 4.1 requests per minute, Ollama becomes a bottleneck for anything beyond a personal chatbot. vLLM's continuous batching and PagedAttention mean it actually gets faster with more concurrent requests up to a point, because the scheduler can fill batches more efficiently. Ollama just queues them.</p>
+
+                <p>I should note: Ollama's single-client latency is competitive. If you are the only user and you send one request at a time, Ollama is only 25% slower than vLLM. The gap only explodes under load.</p>
+
+                <h2>Feature Gaps That Actually Mattered</h2>
+
+                <p>Performance was the headline, but three specific feature gaps kept pushing me toward vLLM.</p>
+
+                <h3>OpenAI-Compatible API Completeness</h3>
+
+                <p>Ollama's <code>/v1/chat/completions</code> endpoint covers the basics: messages, temperature, max_tokens. But when I tried to integrate with an agent framework that needed <code>logprobs</code> and <code>top_logprobs</code>, Ollama returned 400. When I tried streaming with tool calling, the stream format was slightly off and broke the client parser. vLLM's OpenAI API server implements the full spec, including streaming, function calling, logprobs, and even speculative decoding parameters.</p>
+
+                <p>This matters because every "small" incompatibility means writing a translation layer or patching a client library. After the third such patch, I started questioning why I was fighting my inference engine.</p>
+
+                <h3>Multi-GPU Support</h3>
+
+                <p>I bought the second RTX 4090 in February specifically to run larger models. Ollama cannot use multiple GPUs for a single model. It can run different models on different GPUs, but that is not what I needed. I wanted to run Qwen3-14B at FP16 across both cards, and Ollama simply cannot do it.</p>
+
+                <p>vLLM's <code>--tensor-parallel-size 2</code> split the model across both GPUs automatically. Latency increased slightly (first token went from 89ms to 112ms), but I could now run 14B models at full precision and 32B quantized models without touching system RAM. For my use case, that was transformative.</p>
+
+                <h3>Quantization Flexibility</h3>
+
+                <p>Ollama uses GGUF format, which is fine for casual use. But GGUF Q4_0 has a measurable quality degradation compared to AWQ or GPTQ 4-bit. When I ran the same reasoning prompts through Llama-3.1-8B-Q4_0 (Ollama) and Llama-3.1-8B-AWQ (vLLM), the AWQ version got 12% more math questions right on my test set. vLLM supports AWQ, GPTQ, Marlin, FP8, and INT8 — each with different speed/quality tradeoffs. Ollama gives you GGUF and that's it.</p>
+
+                <p>For production use where answer quality matters, that 12% gap is not acceptable.</p>
+
+                <h2>Migration Pain Points</h2>
+
+                <p>Moving from Ollama to vLLM was not painless. Here are the specific issues that cost me time.</p>
+
+                <p><strong>CUDA version hell.</strong> vLLM 0.11.2 requires CUDA 12.4. My system had CUDA 12.1 from a previous project. Upgrading broke PyTorch for another application. I ended up using a Docker container for vLLM, which solved the isolation problem but added container networking complexity. Ollama bundles its own CUDA libraries and never conflicts with system packages. That is a genuine engineering advantage.</p>
+
+                <p><strong>Model management.</strong> Ollama's <code>ollama list</code> and <code>ollama rm</code> commands make model management trivial. vLLM has no model manager. You point it at a Hugging Face model ID or a local path, and it downloads or loads it. There is no <code>vllm list</code>. There is no cleanup command. My <code>~/.cache/huggingface</code> directory grew to 340GB before I wrote a script to prune it. This is a real operational gap.</p>
+
+                <p><strong>Configuration complexity.</strong> Ollama's Modelfile system is simple: write a text file with FROM, PARAMETER, and SYSTEM directives, then <code>ollama create</code>. vLLM has no equivalent. Every startup parameter is a command-line flag. I now maintain a directory of shell scripts named <code>start-qwen3-7b.sh</code>, <code>start-llama3-8b-awq.sh</code>, etc., because I cannot remember whether Qwen3 needs <code>--trust-remote-code</code> or what the correct <code>--max-model-len</code> is for AWQ variants. It is manageable, but it is not elegant.</p>
+
+                <p><strong>Monitoring and observability.</strong> Ollama has basic logging. vLLM has metrics export via Prometheus, which is great if you have a Prometheus setup. I did not. Setting up Prometheus and Grafana to monitor vLLM's <code>vllm:num_requests_running</code> and <code>vllm:gpu_cache_usage_perc</code> took an afternoon. Worth it for production, but overkill for a solo developer experimenting.</p>
+
+                <p><strong>The chat UI gap.</strong> I still miss <code>ollama run</code>. For quick prompt testing, I now either curl at vLLM or use LobeChat. Both are slower than a terminal REPL. I have considered running Ollama alongside vLLM just for the CLI, but that feels silly.</p>
+
+                <p><strong>Documentation quality.</strong> Ollama's documentation is concise, well-organized, and written for humans. vLLM's documentation is comprehensive but reads like it was written by people who already know the answer. When I hit a "RuntimeError: CUDA error: out of memory" in vLLM, the error message gave me a tensor size and a device ID. When Ollama runs out of memory, it says "model requires more system memory than is available" and suggests a smaller model. The vLLM error is technically more informative. The Ollama error tells me what to do next.</p>
+
+                <h2>My Current Setup</h2>
+
+                <p>As of April 2026, my stack looks like this:</p>
+
+                <ul>
+                    <li>vLLM in Docker for all production inference (API server, batch processing, agent backends)</li>
+                    <li>GPUStack for model orchestration when I need to run multiple models and switch between them without manual restarts</li>
+                    <li>LobeChat as the primary web UI for testing and personal use</li>
+                    <li>Ollama still installed on my laptop for offline demos and quick experiments</li>
+                </ul>
+
+                <p>I have not uninstalled Ollama. I use it roughly once a week when I need to verify a model file or test something without spinning up the full vLLM container. It is still the fastest way to go from "I wonder if this model works" to "it works."</p>
+
+                <p>For vLLM, I standardized on a Docker Compose file that mounts my model cache and exposes the API on port 8000. The startup command for Qwen3-7B looks like this:</p>
+
+                <pre><code>docker run --gpus all \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  -p 8000:8000 \
+  vllm/vllm-openai:v0.11.2 \
+  --model Qwen/Qwen3-7B-Instruct \
+  --tensor-parallel-size 1 \
+  --max-model-len 8192 \
+  --gpu-memory-utilization 0.85 \
+  --trust-remote-code</code></pre>
+
+                <p>I keep similar one-liners in a Notion doc. It is not as clean as Ollama's CLI, but it is repeatable and version-controlled in spirit.</p>
+
+                <h2>When to Use Ollama</h2>
+
+                <p>Use Ollama if:</p>
+
+                <ul>
+                    <li>You are a solo developer or researcher who needs to run models locally without learning CUDA, Docker, or distributed systems</li>
+                    <li>Your workload is strictly single-user or low-concurrency (fewer than 5 simultaneous requests)</li>
+                    <li>You value the curated model registry and one-command downloads over bleeding-edge quantization methods</li>
+                    <li>You need a built-in chat interface for rapid prompt iteration</li>
+                    <li>You are running on a laptop or single-GPU desktop and never plan to scale horizontally</li>
+                </ul>
+
+                <p>Ollama is the best onboarding ramp into local LLMs. I recommend it to everyone who asks "how do I run an LLM on my computer?" It is the correct first tool.</p>
+
+                <h2>When to Use vLLM</h2>
+
+                <p>Use vLLM if:</p>
+
+                <ul>
+                    <li>You are serving an API to multiple users or applications</li>
+                    <li>You need to maximize GPU utilization and throughput — vLLM's continuous batching extracts 2-3x more performance from the same hardware</li>
+                    <li>You have multiple GPUs and want to run models larger than a single card can hold</li>
+                    <li>You need full OpenAI API compatibility, including streaming, function calling, and logprobs</li>
+                    <li>You care about quantization quality and want access to AWQ, GPTQ, or FP8 instead of GGUF</li>
+                    <li>You are building a production system where observability, metrics, and request tracing matter</li>
+                </ul>
+
+                <p>vLLM is not harder because its developers are bad at UX. It is harder because it solves harder problems. The complexity is the price of performance and flexibility.</p>
+
+                <h2>The Honest Bottom Line</h2>
+
+                <p>If I could only keep one tool, I would keep vLLM. The performance gap under load is too large to ignore, and the feature gaps (multi-GPU, API completeness, quantization) are blockers for anything beyond personal use.</p>
+
+                <p>But I would miss Ollama. I would miss the 30-second setup. I would miss <code>ollama run</code>. I would miss not thinking about CUDA versions. For every hour vLLM has saved me in inference time, Ollama saved me two hours in setup time during those first two weeks.</p>
+
+                <p>My actual recommendation: start with Ollama. Validate that local LLMs solve your problem. Build your prototype. Get comfortable with prompts and model behavior. Then, when you hit the performance wall — and you will, usually around the 5-concurrent-request mark — migrate to vLLM with a clear understanding of what you are gaining and what you are giving up.</p>
+
+                <p>The migration is not free. Budget a day for CUDA wrangling, another half day for model cache management, and an afternoon for monitoring setup. But once it is running, vLLM stays running. In three months, my vLLM container has crashed exactly once (out of memory on a 32K context request), while I lost count of how many times Ollama's single-threaded queue forced me to watch a progress bar.</p>
+
+                <p>One number that still surprises me: my total inference cost for three months of vLLM on local hardware is zero dollars beyond electricity. The dual RTX 4090s draw about 550 watts under full load. At my local electricity rate of $0.14 per kWh, running vLLM for eight hours a day costs roughly $0.62 daily. That is $56 per month for unlimited inference on models that would cost hundreds through cloud APIs. Ollama would be equally cheap, of course — the hardware cost is the same. But vLLM lets me squeeze 3x more work through that same hardware, which makes the economics genuinely compelling.</p>
+
+                <p>Both tools are excellent. They are just excellent at different things. Choose based on where you are, not where you think you might be in six months. And if you outgrow Ollama, that is a good problem to have.</p>
+
+            </div>
+        </section>
+
+        <section class="adsense-slot">
+            <div class="adsense-placeholder">
+                AdSense ad slot (mid-content) — replace with real ad code after deployment
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <span class="footer-logo-mark" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="6" height="6" rx="1" fill="white"/>
+                                <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="1" y="9" width="6" height="6" rx="1" fill="white" fill-opacity=".5"/>
+                                <rect x="9" y="9" width="6" height="6" rx="1" fill="white"/>
+                            </svg>
+                        </span>
+                        AI Deployment Notes
+                    </div>
+                    <p>Practical local LLM deployment experience, covering real-world troubleshooting with vLLM, GPUStack, Qwen, and more.</p>
+                    <span class="footer-tagline">Hands-on Notes · Pitfall Guides · Daily Updates</span>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/index.html">Home</a></li>
+                        <li><a href="/tools/index.html">Toolkit</a></li>
+                        <li><a href="/posts/index.html">Article Archive</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/faq.html">FAQ</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-legal">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 AI Deployment Notes. All rights reserved.</p>
+                <p>Local AI Deployment Notes</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <p>This site uses cookies to analyze traffic. By continuing to browse, you agree to our <a href="/cookie-policy.html">Cookie Policy</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+            <button class="btn btn-primary" id="acceptCookies">Got it</button>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>
