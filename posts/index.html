@@ -57,7 +57,7 @@
         <section class="page-header">
             <div class="container">
                 <h1>Posts</h1>
-                <p>All hands-on articles — tutorials, troubleshooting, and comparisons, updated regularly</p>
+                <p>Field notes from the deployment trenches — real failures, real numbers, real solutions</p>
             </div>
         </section>
 
@@ -66,377 +66,146 @@
                 <div class="post-filters">
                     <button class="filter-btn active" data-filter="all">All</button>
                     <button class="filter-btn" data-filter="Tutorial">Tutorial</button>
-                    <button class="filter-btn" data-filter="Troubleshooting">Troubleshooting</button>
+                    <button class="filter-btn" data-filter="Field Notes">Field Notes</button>
                     <button class="filter-btn" data-filter="Comparison">Comparison</button>
+                    <button class="filter-btn" data-filter="Deep Dive">Deep Dive</button>
                 </div>
 
-                <div class="post-list">
+                <div class="posts-grid">
 
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/local-vs-cloud-model.html">
-                                <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?w=300&amp;h=200&amp;fit=crop"
-                                     alt="本地模型 vs 云端模型：成本、性能、体验全面对比" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Comparison</span>
-                            <h3><a href="/posts/local-vs-cloud-model.html">本地模型 vs 云端模型：成本、性能、体验全面对比</a></h3>
-                            <p>基于我自建4×RTX 4090服务器（vLLM+Qwen2-7B-Instruct+GPUStack）与阿里百炼、OpenRouter的6个月实测，从每千token成本、...</p>
+                    <article class="post-card reveal" data-category="Field Notes">
+                        <a href="/posts/deploy-qwen3-235b-failure.html" class="post-card-link">
+                            <span class="post-category">Field Notes</span>
+                            <h3>How I Tried to Deploy Qwen3-235B on a Single RTX 4090 (And Why It Failed)</h3>
+                            <p>I thought 24GB of VRAM would be enough. I was wrong. Here's what happened when I tried to run the world's largest open MoE model on a consumer GPU.</p>
                             <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
                                 <span class="read-time">8 min read</span>
                             </div>
-                        </div>
+                        </a>
                     </article>
 
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/vllm-vs-ollama-comparison.html">
-                                <img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=300&amp;h=200&amp;fit=crop"
-                                     alt="vLLM vs Ollama：性能与易用性深度对比" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
+                    <article class="post-card reveal" data-category="Comparison">
+                        <a href="/posts/vllm-vs-ollama-3months.html" class="post-card-link">
                             <span class="post-category">Comparison</span>
-                            <h3><a href="/posts/vllm-vs-ollama-comparison.html">vLLM vs Ollama：性能与易用性深度对比</a></h3>
-                            <p>基于实测数据（Qwen2-7B、A100 80G、吞吐+延迟+内存占用），对比vLLM与Ollama在生产部署中的真实表现，给出明确选型建议：高并发API服务选vLLM...</p>
+                            <h3>vLLM vs Ollama: A Hands-On Comparison After 3 Months of Daily Use</h3>
+                            <p>I started with Ollama because it took 30 seconds to get running. Three months later, I run everything on vLLM. Here's what changed my mind.</p>
                             <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
+                                <span class="read-time">10 min read</span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="post-card reveal" data-category="Deep Dive">
+                        <a href="/posts/vram-lie-full-context.html" class="post-card-link">
+                            <span class="post-category">Deep Dive</span>
+                            <h3>The VRAM Lie: Why Your 24GB GPU Cannot Run a 7B Model at Full Context</h3>
+                            <p>The math is simple: 7B parameters × 2 bytes = 14GB. So why does my 24GB card run out of memory at 8K context? The answer involves something NVIDIA doesn't advertise.</p>
+                            <div class="post-meta">
                                 <span class="read-time">8 min read</span>
                             </div>
-                        </div>
+                        </a>
                     </article>
 
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/qwen36-vs-qwen3coder.html">
-                                <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=300&amp;h=200&amp;fit=crop"
-                                     alt="Qwen3.6 vs Qwen3-Coder：哪个更适合日常使用？" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Comparison</span>
-                            <h3><a href="/posts/qwen36-vs-qwen3coder.html">Qwen3.6 vs Qwen3-Coder：哪个更适合日常使用？</a></h3>
-                            <p>基于自建 GPU 服务器实测，对比 Qwen3.6 和 Qwen3-Coder 在代码生成、推理速度、显存占用和通用对话场景的真实表现，给出明确的选型建议。</p>
+                    <article class="post-card reveal" data-category="Tutorial">
+                        <a href="/posts/gpustack-zero-to-api.html" class="post-card-link">
+                            <span class="post-category">Tutorial</span>
+                            <h3>GPUStack Setup Guide: From Zero to Local API in 20 Minutes</h3>
+                            <p>You don't need Kubernetes. You don't need Docker Compose. Just one binary, one config file, and twenty minutes. Here's the exact setup that worked for me.</p>
                             <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
+                                <span class="read-time">7 min read</span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="post-card reveal" data-category="Tutorial">
+                        <a href="/posts/expose-local-llm-safely.html" class="post-card-link">
+                            <span class="post-category">Tutorial</span>
+                            <h3>How to Expose Your Local LLM to the Internet Without Getting Pwned</h3>
+                            <p>I wanted to use my local model from my phone. I did NOT want to wake up to a $5000 cloud bill because someone found my open port. Cloudflare Tunnel saved me.</p>
+                            <div class="post-meta">
+                                <span class="read-time">9 min read</span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="post-card reveal" data-category="Field Notes">
+                        <a href="/posts/cloud-to-local-cost-breakdown.html" class="post-card-link">
+                            <span class="post-category">Field Notes</span>
+                            <h3>I Migrated from Cloud AI to Local LLM: A Real Cost Breakdown After 6 Months</h3>
+                            <p>I was paying $127/month for OpenAI API calls. Then I bought a $3,800 server. Six months later, the math looks very different — but not in the way you'd expect.</p>
+                            <div class="post-meta">
                                 <span class="read-time">8 min read</span>
                             </div>
-                        </div>
+                        </a>
                     </article>
 
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/qwen-context-overflow-fix.html">
-                                <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&amp;h=200&amp;fit=crop"
-                                     alt="Qwen 模型上下文爆满（context overflow）问题解决方案" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Troubleshooting</span>
-                            <h3><a href="/posts/qwen-context-overflow-fix.html">Qwen 模型上下文爆满（context overflow）问题解决方案</a></h3>
-                            <p>亲身踩坑实录：vLLM部署Qwen-7B时因max_model_len配置不当触发context overflow，导致API直接500。本文详解报错定位、三步修复（co...</p>
+                    <article class="post-card reveal" data-category="Field Notes">
+                        <a href="/posts/vllm-oom-debug-log.html" class="post-card-link">
+                            <span class="post-category">Field Notes</span>
+                            <h3>Fixing vLLM OOM Errors: Reading the Logs Like a Detective</h3>
+                            <p>No stack trace, no error code, just `Killed`. Three hours of printf debugging later, I found the culprit hiding in a log line I almost scrolled past.</p>
                             <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
+                                <span class="read-time">7 min read</span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="post-card reveal" data-category="Tutorial">
+                        <a href="/posts/docker-vllm-checklist.html" class="post-card-link">
+                            <span class="post-category">Tutorial</span>
+                            <h3>Docker + vLLM: The Complete Deployment Checklist I Wish I Had on Day One</h3>
+                            <p>The 17 items I now check before every deployment. Number 12 cost me a weekend. Number 9 still catches me occasionally.</p>
+                            <div class="post-meta">
+                                <span class="read-time">8 min read</span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="post-card reveal" data-category="Tutorial">
+                        <a href="/posts/lobechat-local-model.html" class="post-card-link">
+                            <span class="post-category">Tutorial</span>
+                            <h3>Connecting LobeChat to Your Local Model: The Missing Manual</h3>
+                            <p>The docs say "just set the API URL." They don't mention the CORS nightmare, the timeout defaults, or why your model shows up as "unavailable" for no reason.</p>
+                            <div class="post-meta">
                                 <span class="read-time">6 min read</span>
                             </div>
-                        </div>
+                        </a>
                     </article>
 
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/cloudflare-tunnel-common-issues.html">
-                                <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?w=300&amp;h=200&amp;fit=crop"
-                                     alt="内网穿透失败？Cloudflare Tunnel 常见问题汇总" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Troubleshooting</span>
-                            <h3><a href="/posts/cloudflare-tunnel-common-issues.html">内网穿透失败？Cloudflare Tunnel 常见问题汇总</a></h3>
-                            <p>汇总 Cloudflare Tunnel 内网穿透部署中的 6 个高频报错和诡异现象，包括 502 Bad Gateway、隧道断开、证书错误、DNS 不生效等，附带排查命令和完整解决步骤。</p>
+                    <article class="post-card reveal" data-category="Deep Dive">
+                        <a href="/posts/quantization-tradeoffs.html" class="post-card-link">
+                            <span class="post-category">Deep Dive</span>
+                            <h3>Quantization Deep Dive: FP16, INT8, GPTQ, AWQ — What Actually Matters</h3>
+                            <p>Everyone talks about speed. Nobody talks about the quality cliff at INT4. I ran the same prompts through every quantization method and measured what actually degrades.</p>
                             <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">8 min read</span>
+                                <span class="read-time">10 min read</span>
                             </div>
-                        </div>
+                        </a>
                     </article>
 
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/docker-pull-failure-solutions.html">
-                                <img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=300&amp;h=200&amp;fit=crop"
-                                     alt="Docker 拉取镜像失败的 5 个常见原因（附解决方法）" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Troubleshooting</span>
-                            <h3><a href="/posts/docker-pull-failure-solutions.html">Docker 拉取镜像失败的 5 个常见原因（附解决方法）</a></h3>
-                            <p>亲历自建GPU服务器部署Qwen/vLLM时反复卡在docker pull环节，总结5类真实报错：网络超时、认证失效、镜像名拼写错误、私有仓库403、镜像层校验失败，并附...</p>
+                    <article class="post-card reveal" data-category="Field Notes">
+                        <a href="/posts/cloudflare-tunnel-issues.html" class="post-card-link">
+                            <span class="post-category">Field Notes</span>
+                            <h3>Cloudflare Tunnel for Local AI: Every Issue I Hit and How I Fixed It</h3>
+                            <p>Six error messages, three red herrings, and one DNS propagation that took 47 minutes. My complete Cloudflare Tunnel war journal.</p>
                             <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">8 min read</span>
+                                <span class="read-time">7 min read</span>
                             </div>
-                        </div>
+                        </a>
                     </article>
 
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/local-model-slow-performance-fix.html">
-                                <img src="https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=300&amp;h=200&amp;fit=crop"
-                                     alt="为什么你的本地模型又慢又卡？性能瓶颈分析" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Troubleshooting</span>
-                            <h3><a href="/posts/local-model-slow-performance-fix.html">为什么你的本地模型又慢又卡？性能瓶颈分析</a></h3>
-                            <p>亲身踩坑实录：从 Qwen2-7B 在 vLLM 上吞吐仅 3.2 tok/s 到 28.7 tok/s 的全链路排查。聚焦显存带宽、PCIe 瓶颈、CUDA Graph...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">8 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/gpu-oom-optimization.html">
-                                <img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=300&amp;h=200&amp;fit=crop"
-                                     alt="GPU 显存不足怎么办？本地大模型优化实战" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Troubleshooting</span>
-                            <h3><a href="/posts/gpu-oom-optimization.html">GPU 显存不足怎么办？本地大模型优化实战</a></h3>
-                            <p>亲身踩坑实录：从 vLLM 启动报 OOM 到 Qwen2-7B 成功跑在 12GB 显存的 RTX 4090 上。详解量化、PagedAttention 调优、GPUS...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">8 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/vllm-startup-failure-fix.html">
-                                <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=300&amp;h=200&amp;fit=crop"
-                                     alt="vLLM 启动失败常见原因 + 解决方案（完整排查指南）" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Troubleshooting</span>
-                            <h3><a href="/posts/vllm-startup-failure-fix.html">vLLM 启动失败常见原因 + 解决方案（完整排查指南）</a></h3>
-                            <p>亲身踩坑总结：vLLM 启动报错 'CUDA out of memory'、'Failed to load model'、'No module named vllm.en...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">8 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/qwen-disable-thinking-mode.html">
-                                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&amp;h=200&amp;fit=crop"
-                                     alt="如何关闭 Qwen 模型的思考模式（提升响应速度）" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
+                    <article class="post-card reveal" data-category="Tutorial">
+                        <a href="/posts/local-chatgpt-stack.html" class="post-card-link">
                             <span class="post-category">Tutorial</span>
-                            <h3><a href="/posts/qwen-disable-thinking-mode.html">如何关闭 Qwen 模型的思考模式（提升响应速度）</a></h3>
-                            <p>生产环境中 Qwen 的思考机制会显著增加首字延迟与端到端耗时。本文基于 vLLM 与 GPUStack 实战，提供完整禁用参数、API 透传方式及压测对比数据，帮你快速...</p>
+                            <h3>Building a Local ChatGPT Alternative: My Full Stack from Scratch</h3>
+                            <p>Web UI, API layer, auth, and persistent memory — all running on a single RTX 4090. Here's what I built, what I abandoned, and what I'd do differently.</p>
                             <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">5 min read</span>
+                                <span class="read-time">9 min read</span>
                             </div>
-                        </div>
+                        </a>
                     </article>
 
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/max-model-len-best-practice.html">
-                                <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&amp;h=200&amp;fit=crop"
-                                     alt="本地大模型上下文长度（max-model-len）怎么设置最合理？" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Tutorial</span>
-                            <h3><a href="/posts/max-model-len-best-practice.html">本地大模型上下文长度（max-model-len）怎么设置最合理？</a></h3>
-                            <p>基于Qwen2-7B、vLLM 0.6.3和RTX 4090实测：不盲目拉高max-model-len，而是按显存余量+推理模式动态设值——附完整CLI命令、config...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">8 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/cloudflare-tunnel-local-ai.html">
-                                <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=300&amp;h=200&amp;fit=crop"
-                                     alt="如何使用 Cloudflare Tunnel 暴露本地 AI 服务" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Tutorial</span>
-                            <h3><a href="/posts/cloudflare-tunnel-local-ai.html">如何使用 Cloudflare Tunnel 暴露本地 AI 服务</a></h3>
-                            <p>手把手教你用 cloudflared tunnel 将本地 vLLM 或 Ollama 的 /v1/chat/completions 接口安全暴露到公网，无需公网 IP、...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">8 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/local-model-expose-api-guide.html">
-                                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&amp;h=200&amp;fit=crop"
-                                     alt="本地模型如何开放 API 给外网（内网穿透实战）" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Tutorial</span>
-                            <h3><a href="/posts/local-model-expose-api-guide.html">本地模型如何开放 API 给外网（内网穿透实战）</a></h3>
-                            <p>手把手教你用 frp 实现 Qwen2-7B + vLLM 的安全外网 API 暴露，含完整配置、实测吞吐、HTTPS 自动证书及 3 个真实踩坑点...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">8 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/docker-deploy-ai-service.html">
-                                <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=300&amp;h=200&amp;fit=crop"
-                                     alt="使用 Docker 部署 AI 服务：新手也能看懂" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Tutorial</span>
-                            <h3><a href="/posts/docker-deploy-ai-service.html">使用 Docker 部署 AI 服务：新手也能看懂</a></h3>
-                            <p>一篇基于真实GPU服务器（RTX 4090 ×2）的Docker部署教程，手把手用vLLM跑通Qwen2-7B-Instruct，含完整命令、实测吞吐、显存占用和5个血泪...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">8 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/lobechat-connect-local-model.html">
-                                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&amp;h=200&amp;fit=crop"
-                                     alt="LobeChat 使用教程：接入本地模型的正确方式" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Tutorial</span>
-                            <h3><a href="/posts/lobechat-connect-local-model.html">LobeChat 使用教程：接入本地模型的正确方式</a></h3>
-                            <p>手把手教你用 vLLM 跑通本地 Qwen 模型，并完美对接 LobeChat。包含完整 Docker 启动命令、环境变量配置、CORS 与超时参数调优，本地部署实测首字...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">12 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/local-chatgpt-system-guide.html">
-                                <img src="https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=300&amp;h=200&amp;fit=crop"
-                                     alt="如何在本地搭建一个类似 ChatGPT 的聊天系统（完整实战）" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Tutorial</span>
-                            <h3><a href="/posts/local-chatgpt-system-guide.html">如何在本地搭建一个类似 ChatGPT 的聊天系统（完整实战）</a></h3>
-                            <p>基于 Qwen2-7B-Instruct + vLLM + FastAPI + Gradio，全程在 Ubuntu 24.04 + RTX 4090 单卡上实测部署，含完...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">12 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/gpustack-getting-started.html">
-                                <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=300&amp;h=200&amp;fit=crop"
-                                     alt="GPUStack 入门教程：如何管理多个模型实例" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Tutorial</span>
-                            <h3><a href="/posts/gpustack-getting-started.html">GPUStack 入门教程：如何管理多个模型实例</a></h3>
-                            <p>一篇基于真实自建 GPU 服务器（RTX 4090 ×2）的 GPUStack 实战指南，手把手演示部署 Qwen2-7B、Qwen2-1.5B 和 Phi-3-mini...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">12 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/vllm-deploy-llm-step-by-step.html">
-                                <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=300&amp;h=200&amp;fit=crop"
-                                     alt="使用 vLLM 部署大模型：详细步骤 + 参数说明" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Tutorial</span>
-                            <h3><a href="/posts/vllm-deploy-llm-step-by-step.html">使用 vLLM 部署大模型：详细步骤 + 参数说明</a></h3>
-                            <p>基于真实自建GPU服务器（RTX 4090 ×2）的vLLM部署全流程：从环境搭建、模型加载、API服务到压测调优，附完整命令、关键参数解释及5个实操踩坑点...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">12 min read</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="post-item reveal">
-                        <div class="post-thumbnail">
-                            <a href="/posts/deploy-qwen36-full-guide.html">
-                                <img src="https://images.unsplash.com/photo-1510511459019-5dda7724fd87?w=300&amp;h=200&amp;fit=crop"
-                                     alt="本地部署 Qwen3.6 全流程指南（从 0 到可用）" loading="lazy">
-                            </a>
-                        </div>
-                        <div class="post-info">
-                            <span class="post-category">Tutorial</span>
-                            <h3><a href="/posts/deploy-qwen36-full-guide.html">本地部署 Qwen3.6 全流程指南（从 0 到可用）</a></h3>
-                            <p>基于真实自建 GPU 服务器（RTX 4090 ×2）的 Qwen3.6 本地部署实录：vLLM + GPUStack 一键托管，含完整命令、量化配置、推理延迟实测与 7...</p>
-                            <div class="post-meta">
-                                <time datetime="2026-04-23">April 23, 2026</time>
-                                <span class="dot">·</span>
-                                <span class="read-time">12 min read</span>
-                            </div>
-                        </div>
-                    </article>
                 </div>
-
-                <nav class="pagination" aria-label="Pagination" style="margin-top:3rem;">
-                    <span class="current" aria-current="page">1</span>
-                </nav>
             </div>
         </section>
     </main>
