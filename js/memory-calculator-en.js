@@ -13,6 +13,17 @@ const MODEL_PRESETS = [
   { id: 'deepseek-r1-14b', name: 'DeepSeek-R1-Distill-Qwen-14B', params: 14.2, hiddenSize: 5120, layers: 48, heads: 40, kvHeads: 8, maxContext: 131072, quantizations: ['none', 'awq', 'gptq'] },
   { id: 'deepseek-r1-7b', name: 'DeepSeek-R1-Distill-Qwen-7B', params: 7.6, hiddenSize: 3584, layers: 28, heads: 28, kvHeads: 4, maxContext: 131072, quantizations: ['none', 'awq', 'gptq'] },
   { id: 'deepseek-r1-1.5b', name: 'DeepSeek-R1-Distill-Qwen-1.5B', params: 1.5, hiddenSize: 1536, layers: 28, heads: 12, kvHeads: 4, maxContext: 131072, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'llama3-1-8b', name: 'Llama-3.1-8B-Instruct', params: 8.0, hiddenSize: 4096, layers: 32, heads: 32, kvHeads: 8, maxContext: 131072, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'llama3-1-70b', name: 'Llama-3.1-70B-Instruct', params: 70.6, hiddenSize: 8192, layers: 80, heads: 64, kvHeads: 8, maxContext: 131072, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'llama3-2-3b', name: 'Llama-3.2-3B-Instruct', params: 3.2, hiddenSize: 3072, layers: 28, heads: 24, kvHeads: 8, maxContext: 131072, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'mistral-7b', name: 'Mistral-7B-Instruct-v0.3', params: 7.3, hiddenSize: 4096, layers: 32, heads: 32, kvHeads: 8, maxContext: 32768, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'phi-4', name: 'Phi-4', params: 14.7, hiddenSize: 5120, layers: 40, heads: 40, kvHeads: 10, maxContext: 16384, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'gemma2-9b', name: 'Gemma-2-9B-it', params: 9.2, hiddenSize: 3584, layers: 42, heads: 16, kvHeads: 8, maxContext: 8192, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'gemma2-27b', name: 'Gemma-2-27B-it', params: 27.2, hiddenSize: 4608, layers: 46, heads: 32, kvHeads: 16, maxContext: 8192, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'qwen2-5-7b', name: 'Qwen2.5-7B-Instruct', params: 7.6, hiddenSize: 3584, layers: 28, heads: 28, kvHeads: 4, maxContext: 131072, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'qwen2-5-14b', name: 'Qwen2.5-14B-Instruct', params: 14.2, hiddenSize: 5120, layers: 48, heads: 40, kvHeads: 8, maxContext: 131072, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'qwen2-5-32b', name: 'Qwen2.5-32B-Instruct', params: 32.5, hiddenSize: 5120, layers: 64, heads: 40, kvHeads: 8, maxContext: 131072, quantizations: ['none', 'awq', 'gptq'] },
+  { id: 'qwen2-5-72b', name: 'Qwen2.5-72B-Instruct', params: 72.7, hiddenSize: 8192, layers: 80, heads: 64, kvHeads: 8, maxContext: 131072, quantizations: ['none', 'awq', 'gptq'] },
 ];
 
 const GPU_PRESETS = [
@@ -30,6 +41,11 @@ const GPU_PRESETS = [
   { id: 'm3-pro', name: 'M3 Pro (36GB Unified Memory)', vram: 36, category: 'apple' },
   { id: 'm3-max', name: 'M3 Max (128GB Unified Memory)', vram: 128, category: 'apple' },
   { id: 'm4-max', name: 'M4 Max (128GB Unified Memory)', vram: 128, category: 'apple' },
+  { id: 'rtx4070', name: 'RTX 4070 12GB', vram: 12, category: 'consumer' },
+  { id: 'rtx4070tis', name: 'RTX 4070 Ti Super 16GB', vram: 16, category: 'consumer' },
+  { id: 'rtx4080', name: 'RTX 4080 16GB', vram: 16, category: 'consumer' },
+  { id: 'a6000', name: 'RTX A6000 48GB', vram: 48, category: 'datacenter' },
+  { id: 'rtx6000ada', name: 'RTX 6000 Ada 48GB', vram: 48, category: 'datacenter' },
 ];
 
 const QUANT_OPTIONS = [

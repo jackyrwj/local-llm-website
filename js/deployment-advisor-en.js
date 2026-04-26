@@ -66,7 +66,7 @@ const SOLUTIONS = {
     name: 'Cloud API',
     icon: '☁️',
     tagline: 'Zero operations, ready to use',
-    description: 'Cloud APIs such as Alibaba Cloud Bailian, Volcano Engine, SiliconFlow, etc. No hardware investment needed, pay-as-you-go, elastic scaling.',
+    description: 'Cloud APIs such as OpenAI, Anthropic, Together AI, Groq, or any OpenAI-compatible provider. No hardware investment needed, pay-as-you-go, elastic scaling.',
     pros: ['Zero operations', 'Elastic scaling', 'Wide model selection', 'Fast to launch'],
     cons: ['Data leaves premises', 'High long-term cost', 'Network dependent', 'Latency unpredictable'],
     bestScenes: ['personal', 'dev'],
@@ -469,7 +469,7 @@ function renderResult() {
       <ol>
         <li><span class="step-icon">🔍</span> Use the <strong>VRAM Estimator</strong> to confirm your hardware meets model requirements</li>
         <li><span class="step-icon">⚡</span> Use the <strong>vLLM Command Generator</strong> to generate startup commands in one click</li>
-        <li><span class="step-icon">📚</span> Running into errors? Check the <strong>Deployment Error Knowledge Base</strong></li>
+        <li><span class="step-icon">📚</span> Running into errors? Check <strong>Common Errors: Causes &amp; Fixes</strong></li>
       </ol>
       <div class="next-step-actions">
         <a href="/tools/memory-calculator.html" class="btn btn-secondary">Open VRAM Estimator</a>

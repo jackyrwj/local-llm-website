@@ -82,8 +82,8 @@
                     <div class="cost-form-group">
                         <h3>💻 Hardware Investment</h3>
                         <div class="form-grid">
-                            <label>Server One-Time Investment (CNY)
-                                <input type="number" id="hardwareCost" min="0" step="500" value="35000">
+                            <label>Server One-Time Investment (USD)
+                                <input type="number" id="hardwareCost" min="0" step="500" value="5000">
                                 <span class="hint">Includes GPU, motherboard, PSU, chassis, etc.</span>
                             </label>
                             <label>Depreciation (months)
@@ -97,18 +97,18 @@
                         <h3>⚡ Operating Costs</h3>
                         <div class="form-grid">
                             <label>Total Power Consumption (W)
-                                <input type="number" id="powerW" min="50" max="5000" step="50" value="900">
+                                <input type="number" id="powerW" min="50" max="5000" step="50" value="450">
                                 <span class="hint">Single GPU ~300–450W; measure actual system draw</span>
                             </label>
                             <label>Daily Runtime (hours)
                                 <input type="number" id="hoursPerDay" min="1" max="24" step="1" value="12">
                             </label>
-                            <label>Electricity Price (CNY/kWh)
-                                <input type="number" id="electricityPrice" min="0" max="5" step="0.01" value="0.8">
-                                <span class="hint">Residential ~0.5–0.8; commercial ~0.8–1.2</span>
+                            <label>Electricity Price (USD/kWh)
+                                <input type="number" id="electricityPrice" min="0" max="5" step="0.01" value="0.15">
+                                <span class="hint">US average ~$0.13–0.18; Europe ~€0.25–0.40</span>
                             </label>
-                            <label>Ops &amp; Bandwidth (CNY/month)
-                                <input type="number" id="opsCost" min="0" step="50" value="300">
+                            <label>Ops &amp; Bandwidth (USD/month)
+                                <input type="number" id="opsCost" min="0" step="50" value="50">
                                 <span class="hint">Public IP, domain, monitoring, etc.</span>
                             </label>
                         </div>
@@ -124,9 +124,9 @@
                                 <input type="number" id="tokensPerReq" min="100" step="100" value="2000">
                                 <span class="hint">Includes prompt + completion</span>
                             </label>
-                            <label>API Price (CNY/million tokens)
-                                <input type="number" id="apiPrice" min="0" step="0.1" value="8">
-                                <span class="hint">Reference: GPT-4o ~30–60; domestic models ~2–15</span>
+                            <label>API Price (USD/million tokens)
+                                <input type="number" id="apiPrice" min="0" step="0.1" value="2">
+                                <span class="hint">Reference: GPT-4o ~$2.50–$10; Claude 3.5 ~$3–$15; open models ~$0.20–$1</span>
                             </label>
                         </div>
                     </div>

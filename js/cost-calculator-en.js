@@ -1,6 +1,6 @@
 /* Cost Calculator — cost-calculator-en.js */
 
-const formatMoney = (value) => '¥' + Math.round(value).toLocaleString('en-US');
+const formatMoney = (value) => '$' + Math.round(value).toLocaleString('en-US');
 
 function getInput(id, fallback = 0) {
   const el = document.getElementById(id);
@@ -12,15 +12,15 @@ function getInput(id, fallback = 0) {
 // ── Calculation Engine ───────────────────────────────────
 
 function calculate() {
-  const hardwareCost = getInput('hardwareCost', 35000);
+  const hardwareCost = getInput('hardwareCost', 5000);
   const months = getInput('depreciationMonths', 24);
-  const powerW = getInput('powerW', 900);
+  const powerW = getInput('powerW', 450);
   const hoursPerDay = getInput('hoursPerDay', 12);
-  const electricity = getInput('electricityPrice', 0.8);
-  const opsCost = getInput('opsCost', 300);
+  const electricity = getInput('electricityPrice', 0.15);
+  const opsCost = getInput('opsCost', 50);
   const requests = getInput('requests', 300000);
   const tokensPerReq = getInput('tokensPerReq', 2000);
-  const apiPrice = getInput('apiPrice', 8);
+  const apiPrice = getInput('apiPrice', 2);
 
   const depreciation = hardwareCost / months;
   const powerCost = powerW / 1000 * hoursPerDay * 30 * electricity;
@@ -96,7 +96,7 @@ function renderAll() {
       adviceEl.textContent = `At the current call volume, self-hosting saves approximately ${formatMoney(r.diff)} per month, with an estimated payback period of ${r.payback.toFixed(1)} months. However, note that self-hosting requires handling operations, troubleshooting, model upgrades, and hardware depreciation risks. If call volume fluctuates significantly or your team lacks GPU ops experience, consider starting with a small-scale pilot.`;
       adviceBox.style.display = 'block';
     } else if (r.diff < 0) {
-      adviceEl.textContent = `At the current call volume, cloud API saves approximately ${formatMoney(Math.abs(r.diff))} per month. Building a GPU server is not cost-effective at this scale; continue using cloud API or rent GPUs on demand (e.g., AutoDL, Alibaba Cloud PAI). Self-hosting becomes cost-competitive when monthly requests reach approximately ${Math.ceil(r.localMonthly * 1_000_000 / (r.tokensPerReq * r.apiPrice)).toLocaleString('en-US')}.`;
+      adviceEl.textContent = `At the current call volume, cloud API saves approximately ${formatMoney(Math.abs(r.diff))} per month. Building a GPU server is not cost-effective at this scale; continue using cloud API or rent GPUs on demand (e.g., RunPod, Lambda Labs, Vast.ai). Self-hosting becomes cost-competitive when monthly requests reach approximately ${Math.ceil(r.localMonthly * 1_000_000 / (r.tokensPerReq * r.apiPrice)).toLocaleString('en-US')}.`;
       adviceBox.style.display = 'block';
     } else {
       adviceBox.style.display = 'none';
