@@ -47,7 +47,7 @@
   </url>
   <!-- Tools -->
   <url>
-    <loc>https://local-llm.org/tools/
+    <loc>https://local-llm.org/tools/</loc>
     <lastmod>2026-04-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -85,7 +85,7 @@
 
   <!-- Articles -->
   <url>
-    <loc>https://local-llm.org/posts/
+    <loc>https://local-llm.org/posts/</loc>
     <lastmod>2026-04-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -207,7 +207,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/zh/tools/
+    <loc>https://local-llm.org/zh/tools/</loc>
     <lastmod>2026-04-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -243,7 +243,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://local-llm.org/zh/posts/
+    <loc>https://local-llm.org/zh/posts/</loc>
     <lastmod>2026-04-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
